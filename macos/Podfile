@@ -1,0 +1,100 @@
+platform :osx, '10.15'
+
+# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
+ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+
+project 'Runner', {
+  'Debug' => :debug,
+  'Profile' => :release,
+  'Release' => :release,
+}
+
+def flutter_root
+  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'ephemeral', 'Flutter-Generated.xcconfig'), __FILE__)
+  unless File.exist?(generated_xcode_build_settings_path)
+    raise "#{generated_xcode_build_settings_path} must exist. If you're running pod install manually, make sure \"flutter pub get\" is executed first"
+  end
+
+  File.foreach(generated_xcode_build_settings_path) do |line|
+    matches = line.match(/FLUTTER_ROOT\=(.*)/)
+    return matches[1].strip if matches
+  end
+  raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Flutter-Generated.xcconfig, then run \"flutter pub get\""
+end
+
+require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
+
+flutter_macos_podfile_setup
+
+target 'Runner' do
+  use_frameworks!
+  use_modular_headers!
+
+  flutter_install_all_macos_pods File.dirname(File.realpath(__FILE__))
+  target 'RunnerTests' do
+    inherit! :search_paths
+  end
+end
+
+post_install do |installer|
+  # Ensure pods also use the minimum deployment target set above
+  # https://stackoverflow.com/a/64385584/436422
+  puts 'Determining pod project minimum deployment target'
+
+  pods_project = installer.pods_project
+  deployment_target_key = 'MACOSX_DEPLOYMENT_TARGET'
+  deployment_targets = pods_project.build_configurations.map{ |config| config.build_settings[deployment_target_key] }
+  minimum_deployment_target = deployment_targets.min_by{ |version| Gem::Version.new(version) }
+
+  puts 'Minimal deployment target is ' + minimum_deployment_target
+  puts 'Setting each pod deployment target to ' + minimum_deployment_target
+
+  installer.pods_project.targets.each do |target|
+    flutter_additional_macos_build_settings(target)
+    target.build_configurations.each do |config|
+      config.build_settings[deployment_target_key] = minimum_deployment_target
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+      unless config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'].include?('_LIBCPP_ENABLE_REMOVED_ALLOCATOR_CONST=1')
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << '_LIBCPP_ENABLE_REMOVED_ALLOCATOR_CONST=1'
+      end
+    end
+  end
+
+  # Patch Sentry sources for Xcode 16/macOS SDK 15 compatibility
+  sentry_cpp_file = File.join(installer.sandbox.root, 'Sentry/Sources/Sentry/SentryThreadMetadataCache.cpp')
+  sentry_header_file = File.join(installer.sandbox.root, 'Sentry/Sources/Sentry/include/SentryThreadMetadataCache.hpp')
+
+  [[sentry_cpp_file, 'std::vector<const ThreadHandleMetadataPair>', 'std::vector<ThreadHandleMetadataPair>'],
+   [sentry_header_file, 'std::vector<const ThreadHandleMetadataPair>', 'std::vector<ThreadHandleMetadataPair>']].each do |path, from, to|
+    next unless File.exist?(path)
+
+    File.chmod(0644, path)
+    content = File.read(path)
+    if content.include?(from)
+      File.write(path, content.sub(from, to))
+      puts "✅ Patched #{File.basename(path)} to remove const allocator usage"
+    end
+  end
+
+  sentry_monitor_file = File.join(installer.sandbox.root, 'Sentry/Sources/SentryCrash/Recording/Monitors/SentryCrashMonitor_CPPException.cpp')
+  if File.exist?(sentry_monitor_file)
+    File.chmod(0644, sentry_monitor_file)
+    monitor_content = File.read(sentry_monitor_file)
+    unless monitor_content.include?('#include <exception>')
+      monitor_content.sub!(/(#include <typeinfo>)/, "#include <exception>\n\\1")
+    end
+    File.write(sentry_monitor_file, monitor_content)
+    puts "✅ Patched SentryCrashMonitor_CPPException.cpp to add <exception> header"
+  end
+
+  sentry_machine_context_file = File.join(installer.sandbox.root, 'Sentry/Sources/SentryCrash/Recording/Tools/SentryCrashMachineContext.c')
+  if File.exist?(sentry_machine_context_file)
+    File.chmod(0644, sentry_machine_context_file)
+    machine_content = File.read(sentry_machine_context_file)
+    unless machine_content.include?('#include <sys/_types/_ucontext64.h>')
+      machine_content.sub!(/(#include "SentryCrashLogger.h"\n)/, "\\1#include <sys/_types/_ucontext64.h>\n\n")
+      File.write(sentry_machine_context_file, machine_content)
+      puts "✅ Patched SentryCrashMachineContext.c to include <sys/_types/_ucontext64.h>"
+    end
+  end
+end
