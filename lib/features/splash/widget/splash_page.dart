@@ -19,16 +19,8 @@ class _SplashPageState extends ConsumerState<SplashPage> {
       // 使用routerProvider来导航，避免在initState中直接使用context
       if (mounted) {
         final router = ref.read(routerProvider);
-        final hasSeenIntro = ref.read(Preferences.introCompleted);
-        
-        // 根据用户是否已看过intro页面决定跳转目标
-        // 如果已看过intro，直接跳转到LoginPage
-        // 否则跳转到IntroPage
-        final targetRoute = hasSeenIntro 
-          ? const LoginRoute().location 
-          : const IntroRoute().location;
-          
-        router.pushReplacement(targetRoute);
+        // 直接跳转到LoginPage
+        router.pushReplacement(const LoginRoute().location);
       }
     });
   }

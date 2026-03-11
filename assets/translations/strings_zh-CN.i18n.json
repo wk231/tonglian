@@ -44,6 +44,7 @@
     "pageTitle": "套餐",
     "noAccessToken": "未找到访问令牌，请重新登录。",
     "fetchPlansError": "加载失败: ",
+    "fetchPlansPageError": "加载失败",
     "noPlans": "没有可用的套餐",
     "priceLabel": "价格: ¥",
     "rmb": "元",
@@ -125,7 +126,8 @@
     "noSubscriptionLink": "未找到订阅链接。",
     "accountStatus": "账户状态",
     "banned": "封禁",
-    "active": "正常"
+    "active": "正常",
+    "pageError": "加载失败"
   },
   "inviteCode": {
     "inviteCodeListTitle": "邀请码列表",

@@ -12,7 +12,6 @@ import 'package:hiddify/utils/utils.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 
 part 'connection_notifier.g.dart';
 
@@ -141,9 +140,6 @@ class ConnectionNotifier extends _$ConnectionNotifier with AppLogger {
       loggy.warning("error connecting", err);
       //Go err is not normal object to see the go errors are string and need to be dumped
       loggy.warning(err);
-      if (err.toString().contains("panic")) {
-        await Sentry.captureException(Exception(err.toString()));
-      }
       await ref.read(Preferences.startedByUser.notifier).update(false);
       state = AsyncError(err, StackTrace.current);
     }).run();

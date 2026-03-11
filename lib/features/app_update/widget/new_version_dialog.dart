@@ -3,7 +3,6 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/features/app_update/model/remote_version_entity.dart';
-import 'package:hiddify/features/app_update/notifier/app_update_notifier.dart';
 import 'package:hiddify/utils/utils.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -77,15 +76,15 @@ class NewVersionDialog extends HookConsumerWidget with PresLogger {
       ),
       actions: [
         if (canIgnore)
-          TextButton(
-            onPressed: () async {
-              await ref
-                  .read(appUpdateNotifierProvider.notifier)
-                  .ignoreRelease(newVersion);
-              if (context.mounted) context.pop();
-            },
-            child: Text(t.appUpdate.ignoreBtnTxt),
-          ),
+          // TextButton(
+          //   onPressed: () async {
+          //     await ref
+          //         .read(appUpdateNotifierProvider.notifier)
+          //         .ignoreRelease(newVersion);
+          //     if (context.mounted) context.pop();
+          //   },
+          //   child: Text(t.appUpdate.ignoreBtnTxt),
+          // ),
         TextButton(
           onPressed: context.pop,
           child: Text(t.appUpdate.laterBtnTxt),

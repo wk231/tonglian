@@ -1,16 +1,22 @@
+import 'package:dartx/dartx.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/model/failures.dart';
 import 'package:hiddify/features/config_option/data/config_option_repository.dart';
+import 'package:hiddify/features/panel/xboard/services/http_service/user_service.dart';
 import 'package:hiddify/features/panel/xboard/viewmodels/proxies_viewmodel.dart';
-import 'package:hiddify/singbox/model/singbox_config_enum.dart';
+import 'package:hiddify/features/panel/xboard/viewmodels/user_info_viewmodel.dart';
 import 'package:hiddify/features/proxy/overview/proxies_overview_notifier.dart';
 import 'package:hiddify/features/proxy/widget/proxy_tile.dart';
+import 'package:hiddify/gen/fonts.gen.dart';
 import 'package:hiddify/utils/utils.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+final userInfoViewModelProvider = ChangeNotifierProvider((ref) {
+  return UserInfoViewModel(userService: UserService());
+});
 
 class ProxiesOverviewPage extends HookConsumerWidget with PresLogger {
   const ProxiesOverviewPage({super.key});
@@ -18,7 +24,6 @@ class ProxiesOverviewPage extends HookConsumerWidget with PresLogger {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // 代理数据已在首页获取，此处不再重复获取
-    
     final t = ref.watch(translationsProvider);
 
     final asyncProxies = ref.watch(proxiesOverviewNotifierProvider);
@@ -30,36 +35,15 @@ class ProxiesOverviewPage extends HookConsumerWidget with PresLogger {
     );
 
     final viewModel = ref.watch(proxiesViewModelProvider);
+    final userModel = ref.watch(userInfoViewModelProvider);
 
-    final serviceMode = ref.watch(ConfigOptions.serviceMode);
-    final isGlobalMode = serviceMode == ServiceMode.tun || serviceMode == ServiceMode.tunService;
+    // 使用独立的全局模式标志，不依赖服务模式
+    final isGlobalMode = ref.watch(ConfigOptions.globalMode);
     final isUpdatingGlobalMode = useState(false);
-    final lastNonGlobalMode = useState<ServiceMode?>(isGlobalMode ? null : serviceMode);
-
-    useEffect(() {
-      if (!isGlobalMode) {
-        lastNonGlobalMode.value = serviceMode;
-      }
-      return null;
-    }, [serviceMode, isGlobalMode]);
-
-    ServiceMode fallbackNonGlobalMode() {
-      final stored = lastNonGlobalMode.value;
-      if (stored != null && stored != ServiceMode.tun && stored != ServiceMode.tunService) {
-        return stored;
-      }
-      final available = ServiceMode.choices;
-      if (available.contains(ServiceMode.systemProxy)) {
-        return ServiceMode.systemProxy;
-      }
-      return ServiceMode.proxy;
-    }
-    
-    // 页面标题固定为'请选择线路'，不再动态更改
 
     final appBar = AppBar(
-        title: const Text('请选择线路'),
-        leading: Navigator.canPop(context) ? const BackButton() : null,
+      title: const Text('请选择线路'),
+      leading: Navigator.canPop(context) ? const BackButton() : null,
       actions: [
         Row(
           mainAxisSize: MainAxisSize.min,
@@ -70,15 +54,10 @@ class ProxiesOverviewPage extends HookConsumerWidget with PresLogger {
                   ? null
                   : (value) async {
                       isUpdatingGlobalMode.value = true;
-                      final notifier = ref.read(ConfigOptions.serviceMode.notifier);
+                      final globalModeNotifier = ref.read(ConfigOptions.globalMode.notifier);
                       try {
-                        if (value) {
-                          lastNonGlobalMode.value = serviceMode;
-                          await notifier.update(ServiceMode.tun);
-                        } else {
-                          final targetMode = fallbackNonGlobalMode();
-                          await notifier.update(targetMode);
-                        }
+                        // 只更新全局模式标志，不改变服务模式
+                        await globalModeNotifier.update(value);
                       } catch (error, stackTrace) {
                         CustomToast.error(t.presentShortError(error)).show(context);
                         loggy.warning("failed to toggle global mode", error, stackTrace);
@@ -96,10 +75,10 @@ class ProxiesOverviewPage extends HookConsumerWidget with PresLogger {
           initialValue: sortBy,
           onSelected: ref.read(proxiesSortNotifierProvider.notifier).update,
           icon: const Icon(FluentIcons.arrow_sort_24_regular),
-            tooltip: t.proxies.sortTooltip,
-            itemBuilder: (context) {
-              return [
-                ...ProxiesSort.values.map(
+          tooltip: t.proxies.sortTooltip,
+          itemBuilder: (context) {
+            return [
+              ...ProxiesSort.values.map(
                 (e) => PopupMenuItem(
                   value: e,
                   child: Text(e.present(t)),
@@ -113,8 +92,6 @@ class ProxiesOverviewPage extends HookConsumerWidget with PresLogger {
 
     switch (asyncProxies) {
       case AsyncData(value: final groups):
-        // 移除动态更新标题的逻辑
-        
         if (groups.isEmpty) {
           return Scaffold(
             appBar: appBar,
@@ -125,7 +102,7 @@ class ProxiesOverviewPage extends HookConsumerWidget with PresLogger {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(t.proxies.emptyProxiesMsg),
-        ],
+                    ],
                   ),
                 ),
               ],
@@ -148,9 +125,10 @@ class ProxiesOverviewPage extends HookConsumerWidget with PresLogger {
                       sliver: SliverList.builder(
                         itemBuilder: (_, index) {
                           final proxy = group.items[index];
+                          final iconUrl = index == 0 ? '' : (viewModel.proxiesList?.elementAtOrNull(index - 1)?.icon ?? '');
                           return ProxyTile(
                             proxy,
-                            index == 0 ? '' : viewModel.proxiesList?[index - 1] ?? '',
+                            iconUrl,
                             selected: group.selected == proxy.tag,
                             onSelect: () async {
                               if (selectActiveProxyMutation.state.isInProgress) {
@@ -182,9 +160,10 @@ class ProxiesOverviewPage extends HookConsumerWidget with PresLogger {
                     ),
                     itemBuilder: (context, index) {
                       final proxy = group.items[index];
+                      final iconUrl = index == 0 ? '' : (viewModel.proxiesList?.elementAtOrNull(index - 1)?.icon ?? '');
                       return ProxyTile(
                         proxy,
-                        index == 0 ? '' : viewModel.proxiesList?[index - 1] ?? '',
+                        iconUrl,
                         selected: group.selected == proxy.tag,
                         onSelect: () async {
                           if (selectActiveProxyMutation.state.isInProgress) {
@@ -221,14 +200,62 @@ class ProxiesOverviewPage extends HookConsumerWidget with PresLogger {
         );
 
       case AsyncError(:final error):
+        final list = viewModel.proxiesList;
+        final count = list?.length ?? 0;
         return Scaffold(
           appBar: appBar,
           body: CustomScrollView(
             slivers: [
-              SliverErrorBodyPlaceholder(
-                t.presentShortError(error),
-                icon: null,
-              ),
+              if (count == 0)
+                SliverFillRemaining(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(t.proxies.emptyProxiesMsg),
+                        const SizedBox(height: 8),
+                        Text('${error}', style: const TextStyle(fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.only(bottom: 86),
+                  sliver: SliverList.builder(
+                    itemBuilder: (_, index) {
+                      final proxy = list![index];
+                      return InkWell(
+                        onTap: userModel.userInfo?.planId == 0 ? null : () => Navigator.of(context).pop(proxy.name),
+                        child: Card(
+                          color: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(60)),
+                          child: ListTile(
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            title: Text(
+                              proxy.name,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(color: Colors.black, fontSize: 18, fontFamily: FontFamily.emoji),
+                            ),
+                            leading: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              child: SizedBox(width: 36, height: 36, child: proxy.icon.isEmpty ? const Icon(Icons.public, size: 36) : Image.network(proxy.icon, width: 36, height: 36)),
+                            ),
+                            subtitle: Text.rich(
+                              TextSpan(
+                                text: proxy.type,
+                                style: TextStyle(color: Colors.black),
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            horizontalTitleGap: 4,
+                          ),
+                        ),
+                      );
+                    },
+                    itemCount: count,
+                  ),
+                ),
             ],
           ),
         );

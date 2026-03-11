@@ -58,9 +58,6 @@ class InviteCodeSection extends ConsumerWidget {
             final inviteCodesAsync = ref.watch(inviteCodesProvider);
             return inviteCodesAsync.when(
               data: (inviteCodes) {
-                if (inviteCodes.isEmpty) {
-                  return Center(child: Text(t.inviteCode.noInviteCodes));
-                }
                 visible = inviteCodes.isEmpty;
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

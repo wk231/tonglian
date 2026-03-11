@@ -11,13 +11,10 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'general_preferences.g.dart';
 
-bool _debugIntroPage = false;
-
 abstract class Preferences {
   static final introCompleted = PreferencesNotifier.create(
     "intro_completed",
-    false,
-    overrideValue: _debugIntroPage && kDebugMode ? false : null,
+    true,
   );
 
   static final silentStart = PreferencesNotifier.create<bool, bool>(
@@ -68,6 +65,11 @@ abstract class Preferences {
     ActionsAtClosing.ask,
     mapFrom: ActionsAtClosing.values.byName,
     mapTo: (value) => value.name,
+  );
+
+  static final selectedProxyName = PreferencesNotifier.create<String, String>(
+    "selected_proxy_name",
+    "请选择线路",
   );
 }
 

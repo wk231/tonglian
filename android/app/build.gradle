@@ -4,6 +4,10 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+flutter {
+    source '../..'
+}
+
 def localProperties = new Properties()
 def localPropertiesFile = rootProject.file('local.properties')
 if (localPropertiesFile.exists()) {
@@ -37,7 +41,8 @@ def flutterVersionName = localProperties.getProperty('flutter.versionName') ?: '
 android {
     namespace 'com.hiddify.hiddify'
     testNamespace "test.com.hiddify.hiddify"
-    compileSdkVersion 34
+    compileSdkVersion 36
+    buildToolsVersion "34.0.0"
     ndkVersion "26.1.10909125"
 
     compileOptions {
@@ -56,7 +61,7 @@ android {
     defaultConfig {
         applicationId "com.sl.wljsq"
         minSdkVersion 21
-        targetSdkVersion 34
+        targetSdkVersion 36
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         multiDexEnabled true
@@ -86,6 +91,8 @@ android {
 
     buildTypes {
         release {
+            minifyEnabled false
+            shrinkResources false
             if (hasKeyStore) {
                 signingConfig signingConfigs.release
             } else {
@@ -110,10 +117,6 @@ android.applicationVariants.all { variant ->
     variant.outputs.each { output ->
         output.versionCodeOverride = android.defaultConfig.versionCode
     }
-}
-
-flutter {
-    source '../..'
 }
 
 dependencies {

@@ -84,12 +84,6 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
         title: Text(t.purchase.pageTitle, style: const TextStyle(color: Colors.black)),
         centerTitle: true,
         elevation: 0,
-        // leading: IconButton(
-        //   icon: const Icon(Icons.menu),
-        //   onPressed: () {
-        //     Scaffold.of(context).openDrawer();
-        //   },
-        // ),
         actions: [
           TextButton(
             onPressed: () {
@@ -136,6 +130,18 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
   }
 
   void showSheet(PurchaseViewModel viewModel, Translations t) {
+    // 获取价格列表
+    final prices = priceList(viewModel);
+    // 设置默认选中的价格（第一个有效价格）
+    if (prices.isNotEmpty) {
+      // 找到第一个有效价格
+      final firstValidPrice = prices.first;
+      // 找到对应的周期
+      final firstPeriod = _findCheapestPeriod(viewModel.plans[viewModel.select], firstValidPrice);
+      // 设置默认选中的价格和周期
+      viewModel.setSelectedPrice(firstValidPrice, firstPeriod);
+    }
+
     showModalBottomSheet(
       isScrollControlled: true,
       context: context,
@@ -357,7 +363,8 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
                         ),
                       ),
                       Text(
-                        formatter.format(plan.monthPrice ?? 0),
+                        // formatter.format(plan.monthPrice ?? 0),
+                        formatter.format(plan.onetimePrice ?? plan.monthPrice ??plan.quarterPrice ??plan.halfYearPrice ??plan.yearPrice ??plan.twoYearPrice ??plan.threeYearPrice??0),
                         style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w500,
@@ -426,5 +433,20 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
         );
       }).toList(),
     );
+  }
+
+  double getFirstValidPrice(PurchaseViewModel viewModel, int index) {
+    final prices = priceList(viewModel);
+
+    // 从指定索引开始查找第一个有效价格
+    for (int i = index; i < prices.length; i++) {
+      final price = prices[i];
+      if (price != null && price > 0) {
+        return price;
+      }
+    }
+
+    // 如果都没找到，返回0或最后一个
+    return prices.last ?? 0;
   }
 }

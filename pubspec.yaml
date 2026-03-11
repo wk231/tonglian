@@ -49,7 +49,7 @@ dependencies:
   url_launcher: ^6.2.5
   vclibs: ^0.1.2
   launch_at_startup: ^0.2.2
-  sentry_flutter: ^7.16.1
+  sentry_flutter: ^9.0.0
   sentry_dart_plugin: ^1.7.1
   combine: ^0.5.7
   path: ^1.8.3
@@ -70,7 +70,7 @@ dependencies:
   sliver_tools: ^0.2.12
   flutter_adaptive_scaffold: ^0.1.8
 
-  upgrader: ^9.0.0
+#  upgrader: ^9.0.0
   toastification: ^1.2.1
   version: ^3.0.2
   posix: ^6.0.1
@@ -96,7 +96,7 @@ dependencies:
     git: https://github.com/hiddify-com/flutter_circle_flags.git
   protobuf: ^3.1.0
   grpc: ^3.2.4
-  dynamic_color: ^1.7.0
+  dynamic_color: ">=1.7.0 <1.8.0"  # 1.8.x requires Flutter Color.toARGB32 (newer SDK)
   flutter_typeahead: ^5.0.1
   flutter_staggered_grid_view: ^0.7.0
 

@@ -344,9 +344,13 @@ class ProfileSubscriptionInfo extends HookConsumerWidget {
       return (t.profile.subscription.expired, theme.colorScheme.error);
     } else if (subInfo.ratio >= 1) {
       return (t.profile.subscription.noTraffic, theme.colorScheme.error);
-    } else if (subInfo.remaining.inDays > 365) {
-      return (t.profile.subscription.remainingDuration(duration: "∞"), null);
-    } else {
+    }
+    else if (subInfo.remaining.inDays > 3650) {
+      // return (t.profile.subscription.remainingDuration(duration: "长期有效"), null);
+      return ("长期有效", null);
+
+    }
+    else {
       return (
         t.profile.subscription.remainingDuration(duration: subInfo.remaining.inDays),
         null,
@@ -367,9 +371,10 @@ class ProfileSubscriptionInfo extends HookConsumerWidget {
           textDirection: TextDirection.ltr,
           child: Flexible(
             child: Text(
-              subInfo.total > 10 * 1099511627776 //10TB
-                  ? "∞ G"
-                  : subInfo.consumption.sizeOf(subInfo.total),
+              // subInfo.total > 10 * 1099511627776 //10TB
+              //     ? "∞ G"
+              //     :
+              subInfo.consumption.sizeOf(subInfo.total),
               semanticsLabel: t.profile.subscription.remainingTrafficSemanticLabel(
                 consumed: subInfo.consumption.sizeGB(),
                 total: subInfo.total.sizeGB(),

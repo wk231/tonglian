@@ -45,9 +45,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               padding: const EdgeInsets.all(16.0),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxWidth: constraints.maxWidth > 600
-                      ? 500
-                      : constraints.maxWidth * 0.9,
+                  maxWidth: constraints.maxWidth > 600 ? 500 : constraints.maxWidth * 0.9,
                 ),
                 child: Form(
                   child: Column(
@@ -128,19 +126,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         ElevatedButton(
                           onPressed: domainCheckViewModel.isSuccess
                               ? () async {
-                                  final email =
-                                      loginViewModel.usernameController.text;
-                                  final password =
-                                      loginViewModel.passwordController.text;
-                                  try {
-                                    await loginViewModel.login(
-                                        email, password, context, ref,);
-                                    if (context.mounted) {
-                                      context.go('/');
-                                    }
-                                  } catch (e) {
-                                    _showErrorSnackbar(context,
-                                        "${t.login.loginErr}", Colors.red,);
+                                  final email = loginViewModel.usernameController.text;
+                                  final password = loginViewModel.passwordController.text;
+                                  await loginViewModel.login(
+                                    email,
+                                    password,
+                                    context,
+                                    ref,
+                                  );
+                                  if (context.mounted) {
+                                    context.go('/');
                                   }
                                 }
                               : null, // 禁用按钮，直到连通性检查通过
@@ -166,18 +161,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          TextButton(
-                            onPressed: () {
-                              context.go('/forget-password');
-                            },
-                            child: Text(
-                              t.login.forgotPassword,
-                              style: TextStyle(
-                                color: Theme.of(context).primaryColor,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
+                          // TextButton(
+                          //   onPressed: () {
+                          //     context.go('/forget-password');
+                          //   },
+                          //   child: Text(
+                          //     t.login.forgotPassword,
+                          //     style: TextStyle(
+                          //       color: Theme.of(context).primaryColor,
+                          //       fontSize: 14,
+                          //     ),
+                          //   ),
+                          // ),
                           TextButton(
                             onPressed: () {
                               context.go('/register');

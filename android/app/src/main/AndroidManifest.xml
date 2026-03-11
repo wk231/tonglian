@@ -30,6 +30,10 @@
         android:label="通连加速器"
         android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="31">
+        <!-- 禁用 Android Google 数据收集 -->
+        <meta-data android:name="firebase_analytics_collection_enabled" android:value="false" />
+        <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" />
+        <meta-data android:name="firebase_crashlytics_collection_enabled" android:value="false" />
 
         <meta-data
             android:name="android.app.shortcuts"

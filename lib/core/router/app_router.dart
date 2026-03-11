@@ -6,7 +6,6 @@ import 'package:hiddify/core/router/routes.dart';
 import 'package:hiddify/features/panel/xboard/services/auth_provider.dart';
 import 'package:hiddify/utils/utils.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 
 part 'app_router.g.dart';
 
@@ -27,7 +26,6 @@ GoRouter router(RouterRef ref) {
     routes: [
       if (useMobileRouter) $mobileWrapperRoute else $desktopWrapperRoute,
       $splashRoute,
-      $introRoute,
       $loginRoute,
       $registerRoute,
       $forgetPasswordRoute,
@@ -38,22 +36,15 @@ GoRouter router(RouterRef ref) {
       // 基本路由检查
       final currentPath = state.uri.path;
       
-      // 允许splash、intro、login、register和forget-password路由直接访问
+      // 允许splash、login、register和forget-password路由直接访问
       if (currentPath == '/splash' || 
-          currentPath == '/intro' || 
           currentPath == '/login' || 
           currentPath == '/register' || 
           currentPath == '/forget-password') {
         return null;
       }
       
-      // 对于其他路由，先检查是否已经看过intro
-      final hasSeenIntro = ref.read(Preferences.introCompleted);
-      if (!hasSeenIntro) {
-        return '/intro';
-      }
-      
-      // 已经看过intro的情况下，检查是否已登录
+      // 检查是否已登录
       final isLoggedIn = ref.read(authProvider);
       if (!isLoggedIn) {
         return '/login';
@@ -62,9 +53,6 @@ GoRouter router(RouterRef ref) {
       // 已登录用户可以访问其他路由
       return null;
     },
-    observers: [
-      SentryNavigatorObserver(),
-    ],
   );
 }
 
@@ -73,8 +61,9 @@ final tabLocations = [
   // const ProxiesRoute().location,
   const PurchaseRoute().location,
   const UserInfoRoute().location,
-  const ConfigOptionsRoute().location,
+
   const SettingsRoute().location,
+  const ConfigOptionsRoute().location,
   const LogsOverviewRoute().location,
   const AboutRoute().location,
 ];
@@ -103,7 +92,6 @@ class RouterListenable extends _$RouterListenable with AppLogger implements List
   @override
   Future<void> build() async {
     // 监听状态变化以触发路由刷新
-    ref.watch(Preferences.introCompleted);
     ref.watch(authProvider);
 
     ref.listenSelf((_, __) {

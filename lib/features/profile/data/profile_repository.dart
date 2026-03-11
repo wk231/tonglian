@@ -397,12 +397,17 @@ class ProfileRepositoryImpl with ExceptionHandler, InfraLogger implements Profil
 
         try {
           final configs = await configOptionRepository.getConfigOptions();
+          // 默认 UA 来自 AppInfo：HiddifyNext/版本 (operatingSystem) ...，Android 下为 (android)。
+          // 订阅站据此识别为移动端并返回 HTML 中间页而非订阅文件。Android 请求订阅时改用「非 Android」UA 即可，不必固定为某条桌面浏览器串。
+          final String? userAgent = Platform.isAndroid
+              ? "HiddifyNext/2.5.7 (Macintosh) like ClashMeta v2ray sing-box"
+              : (configs.useXrayCoreWhenPossible ? "v2rayNG/1.8.23" : null);
 
           final response = await httpClient.download(
             url.trim(),
             tempFile.path,
             cancelToken: cancelToken,
-            userAgent: configs.useXrayCoreWhenPossible ? "v2rayNG/1.8.23" : null,
+            userAgent: userAgent,
           );
           final headers = await _populateHeaders(response.headers.map, tempFile.path);
           return await validateConfig(file.path, tempFile.path, false)

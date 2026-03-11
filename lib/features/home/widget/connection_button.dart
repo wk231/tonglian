@@ -26,10 +26,7 @@ class ConnectionButton extends HookConsumerWidget {
     final connectionStatus = ref.watch(connectionNotifierProvider);
     final activeProxy = ref.watch(activeProxyNotifierProvider);
     final delay = activeProxy.valueOrNull?.urlTestDelay ?? 0;
-
     final requiresReconnect = ref.watch(configOptionNotifierProvider).valueOrNull;
-    final today = DateTime.now();
-
     ref.listen(
       connectionNotifierProvider,
       (_, next) {
@@ -41,7 +38,6 @@ class ConnectionButton extends HookConsumerWidget {
         }
       },
     );
-
     Future<bool> showExperimentalNotice() async {
       final hasExperimental = ref.read(ConfigOptions.hasExperimentalFeatures);
       final canShowNotice = !ref.read(disableExperimentalFeatureNoticeProvider);
@@ -50,7 +46,6 @@ class ConnectionButton extends HookConsumerWidget {
       }
       return true;
     }
-
     return _ConnectionButton(
       onTap: switch (connectionStatus) {
         AsyncData(value: Disconnected()) || AsyncError() => () async {
@@ -72,7 +67,7 @@ class ConnectionButton extends HookConsumerWidget {
       },
       label: switch (connectionStatus) {
         AsyncData(value: Connected()) when requiresReconnect == true => t.connection.reconnect,
-        AsyncData(value: Connected()) when delay <= 0 || delay >= 65000 => t.connection.connecting,
+        AsyncData(value: Connected()) when delay <= 0 || delay >= 650000 => t.connection.connecting,
         AsyncData(value: final status) => status.present(t),
         _ => "",
       },

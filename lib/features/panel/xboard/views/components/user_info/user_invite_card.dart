@@ -44,6 +44,7 @@ class _UserInfoCardState extends ConsumerState<UserInviteCard> {
         ? const SizedBox()
         : Center(
             child: Card(
+              elevation: 4,
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.all(Radius.circular(12)),
               ),

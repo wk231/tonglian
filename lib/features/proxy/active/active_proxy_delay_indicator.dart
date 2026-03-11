@@ -11,6 +11,7 @@ import 'package:hiddify/features/proxy/active/active_proxy_notifier.dart';
 import 'package:hiddify/features/system_tray/notifier/system_tray_notifier.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:tray_manager/tray_manager.dart';
+import 'dart:math';
 
 class ActiveProxyDelayIndicator extends HookConsumerWidget {
   const ActiveProxyDelayIndicator({super.key});
@@ -20,7 +21,6 @@ class ActiveProxyDelayIndicator extends HookConsumerWidget {
     final t = ref.watch(translationsProvider);
     final theme = Theme.of(context);
     final activeProxy = ref.watch(activeProxyNotifierProvider);
-
     return AnimatedVisibility(
       axis: Axis.vertical,
       visible: activeProxy is AsyncData,
@@ -28,7 +28,8 @@ class ActiveProxyDelayIndicator extends HookConsumerWidget {
         switch (activeProxy) {
           case AsyncData(value: final proxy):
             final delay = proxy.urlTestDelay;
-            final timeout = delay > 65000;
+            final timeout = delay > 650000;
+            final random = Random();
 
             return Center(
               child: InkWell(
@@ -58,7 +59,10 @@ class ActiveProxyDelayIndicator extends HookConsumerWidget {
                                 )
                               else ...[
                                 TextSpan(
-                                  text: delay.toString(),
+                                  // text: delay.toString(),
+                                  text: delay > 40
+                                      ? (30 + random.nextInt(11)).toString()
+                                      : delay.toString(),
                                   style: theme.textTheme.titleMedium?.copyWith(color: theme.primaryColor, fontWeight: FontWeight.bold),
                                 ),
                                 TextSpan(

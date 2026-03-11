@@ -36,7 +36,7 @@ class ProxiesSortNotifier extends _$ProxiesSortNotifier with AppLogger {
   late final _pref = PreferencesEntry(
     preferences: ref.watch(sharedPreferencesProvider).requireValue,
     key: "proxies_sort_mode",
-    defaultValue: ProxiesSort.delay,
+    defaultValue: ProxiesSort.unsorted,
     mapFrom: ProxiesSort.values.byName,
     mapTo: (value) => value.name,
   );

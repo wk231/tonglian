@@ -15,8 +15,7 @@ enum ServiceMode {
 
   final String key;
 
-  static ServiceMode get defaultMode =>
-      PlatformUtils.isDesktop ? systemProxy : tun;
+  static ServiceMode get defaultMode => PlatformUtils.isDesktop ? systemProxy : tun;
 
   /// supported service mode based on platform, use this instead of [values] in UI
   static List<ServiceMode> get choices {
@@ -38,10 +37,8 @@ enum ServiceMode {
   String present(TranslationsEn t) => switch (this) {
         proxy => t.config.serviceModes.proxy,
         systemProxy => t.config.serviceModes.systemProxy,
-        tun =>
-          "${t.config.serviceModes.tun}${isExperimental ? " (${t.settings.experimental})" : ""}",
-        tunService =>
-          "${t.config.serviceModes.tunService}${isExperimental ? " (${t.settings.experimental})" : ""}",
+        tun => "${t.config.serviceModes.tun}${isExperimental ? " (${t.settings.experimental})" : ""}",
+        tunService => "${t.config.serviceModes.tunService}${isExperimental ? " (${t.settings.experimental})" : ""}",
       };
 
   String presentShort(TranslationsEn t) => switch (this) {

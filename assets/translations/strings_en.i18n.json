@@ -44,6 +44,7 @@
     "pageTitle": "Plans",
     "noAccessToken": "No access token found. Please log in again.",
     "fetchPlansError": "Failed to load: ",
+    "fetchPlansPageError": "Failed to load",
     "noPlans": "No available plans",
     "priceLabel": "Price: ¥",
     "rmb": "CNY",
@@ -124,7 +125,9 @@
     "noSubscriptionLink": "No subscription link found.",
     "accountStatus": "Account Status",
     "banned": "Banned",
-    "active": "Active"
+    "active": "Active",
+    "pageError": "Failed to load"
+    
   },
   "inviteCode": {
     "inviteCodeListTitle": "Invite Codes",

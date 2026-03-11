@@ -8,6 +8,7 @@ import 'package:hiddify/features/profile/model/profile_entity.dart';
 import 'package:hiddify/features/profile/notifier/active_profile_notifier.dart';
 import 'package:hiddify/features/profile/widget/profile_tile.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:hiddify/features/panel/xboard/models/subscribe_info_model.dart';
 
 final userInfoViewModelProvider = ChangeNotifierProvider((ref) {
   return UserInfoViewModel(userService: UserService());
@@ -38,13 +39,13 @@ class _UserInfoCardState extends ConsumerState<UserInfoCard> {
     if (viewModel.isLoading) {
       return const Center(child: CircularProgressIndicator());
     } else if (viewModel.userInfo != null) {
-      return _buildUserInfoCard(viewModel.userInfo!, t);
+      return _buildUserInfoCard(viewModel.userInfo!,viewModel.subscribeInfo!, t);
     } else {
       return const SizedBox(); // 如果没有数据，则返回空占位
     }
   }
 
-  Widget _buildUserInfoCard(UserInfo userInfo, Translations t) {
+  Widget _buildUserInfoCard(UserInfo userInfo,SubscribeInfo subscribeInfo, Translations t) {
     final activeProfile = ref.watch(activeProfileProvider);
     return Center(
       child: Column(
@@ -59,7 +60,7 @@ class _UserInfoCardState extends ConsumerState<UserInfoCard> {
           const SizedBox(height: 10),
           Text(userInfo.email, style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-          Text('目前是${t.userInfo.plan}${userInfo.planId}', style: const TextStyle(color: Color(0xFF7B7B7C), fontSize: 14)),
+          Text('目前是${t.userInfo.plan}:${subscribeInfo.plan?.name??""}', style: const TextStyle(color: Color(0xFF7B7B7C), fontSize: 14)),
           const SizedBox(height: 10),
           switch (activeProfile) {
             AsyncData(value: final profile?) => ProfileSubscriptionInfo((profile as RemoteProfileEntity).subInfo!),

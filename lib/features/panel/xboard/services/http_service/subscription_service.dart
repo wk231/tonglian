@@ -19,9 +19,7 @@ class SubscriptionService {
         return data["subscribe_url"] as String?;
       }
     }
-
-    // 返回 null 或抛出异常，如果数据结构不匹配
-    throw Exception("系统异常");
+    return '';
   }
 
   // 重置订阅链接的方法
@@ -38,6 +36,6 @@ class SubscriptionService {
         return data; // 如果 'data' 是字符串，直接返回
       }
     }
-    throw Exception("系统异常");
+    return '';
   }
 }

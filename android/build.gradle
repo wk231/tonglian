@@ -5,6 +5,16 @@ allprojects {
     }
 }
 
+// Expose 'flutter' to plugin subprojects (e.g. jni) that reference flutter.ndkVersion.
+// 不要给 :app 设置，否则会覆盖 Flutter 插件创建的 flutter 扩展，导致 "Must provide Flutter source directory"。
+subprojects { subproject ->
+    if (subproject.name != 'app') {
+        subproject.ext.flutter = [
+            ndkVersion: "26.1.10909125"
+        ]
+    }
+}
+
 rootProject.buildDir = '../build'
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:hiddify/features/panel/xboard/models/payment_method.dart';
 import 'package:hiddify/features/panel/xboard/models/plan_model.dart';
@@ -28,10 +30,21 @@ class PurchaseViewModel extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    try {
+    Future<void> loadOnce() async {
       _plans = await _purchaseService.fetchPlanData();
+    }
+
+    try {
+      await loadOnce();
     } catch (e) {
-      _errorMessage = e.toString();
+      // 第一次失败时重试一次
+      try {
+        Timer(Duration(seconds: 1), () async {
+          await loadOnce();
+        });
+      } catch (e2) {
+        _errorMessage = e2.toString();
+      }
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -46,6 +59,19 @@ class PurchaseViewModel extends ChangeNotifier {
 
   Future<void> fetchPaymentMethods() async {
     final accessToken = await getToken(); // 获取用户的token
-    paymentMethods = await _purchaseService.getPaymentMethods(accessToken!);
+    if (accessToken == null) return;
+
+    Future<void> loadOnce() async {
+      paymentMethods = await _purchaseService.getPaymentMethods(accessToken);
+    }
+
+    try {
+      await loadOnce();
+    } catch (_) {
+      // 第一次失败时重试一次，如果仍然失败则放弃
+      try {
+        await loadOnce();
+      } catch (_) {}
+    }
   }
 }

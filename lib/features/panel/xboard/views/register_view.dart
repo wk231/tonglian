@@ -63,30 +63,31 @@ class RegisterPage extends ConsumerWidget {
                   return null;
                 },
               ),
+
               TextFormField(
-                controller: registerViewModel.inviteCodeController,
+                controller: registerViewModel.passwordConfirmController,
+                obscureText: registerViewModel.obscureConfirmPassword,
                 decoration: InputDecoration(
-                  labelText: t.register.inviteCode,
-                ),
-              ),
-              TextFormField(
-                controller: registerViewModel.emailCodeController,
-                decoration: InputDecoration(
-                  labelText: t.register.verificationCode,
-                  suffixIcon: registerViewModel.isCountingDown
-                      ? Text('${registerViewModel.countdownTime} s')
-                      : TextButton(
-                          onPressed: () =>
-                              registerViewModel.sendVerificationCode(context),
-                          child: Text(t.register.sendCode),
-                        ),
+                  labelText: '确认密码',
+                  suffixIcon: IconButton(
+                    icon: Icon(registerViewModel.obscureConfirmPassword
+                        ? Icons.visibility
+                        : Icons.visibility_off,),
+                    onPressed: registerViewModel.togglePasswordConfirmVisibility,
+                  ),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return t.register.verificationCodeEmptyError;
+                    return t.register.passwordEmptyError;
                   }
                   return null;
                 },
+              ),
+              TextFormField(
+                controller: registerViewModel.inviteCodeController,
+                decoration: InputDecoration(
+                  labelText: '邀请码（可选）',
+                ),
               ),
               const SizedBox(height: 20),
               ElevatedButton(

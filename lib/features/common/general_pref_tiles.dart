@@ -1,6 +1,5 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:hiddify/core/analytics/analytics_controller.dart';
 import 'package:hiddify/core/localization/locale_extensions.dart';
 import 'package:hiddify/core/localization/locale_preferences.dart';
 import 'package:hiddify/core/localization/translations.dart';
@@ -98,42 +97,6 @@ class RegionPrefTile extends ConsumerWidget {
           // await ref.watch(ConfigOptions.resolveDestination.notifier).update(!tmp);
           // await ref.watch(ConfigOptions.resolveDestination.notifier).update(tmp);
           //TODO: fix it
-        }
-      },
-    );
-  }
-}
-
-class EnableAnalyticsPrefTile extends ConsumerWidget {
-  const EnableAnalyticsPrefTile({
-    super.key,
-    this.onChanged,
-  });
-
-  final ValueChanged<bool>? onChanged;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final t = ref.watch(translationsProvider);
-
-    final enabled = ref.watch(analyticsControllerProvider).requireValue;
-
-    return SwitchListTile(
-      title: Text(t.settings.general.enableAnalytics),
-      subtitle: Text(
-        t.settings.general.enableAnalyticsMsg,
-        style: Theme.of(context).textTheme.bodySmall,
-      ),
-      secondary: const Icon(FluentIcons.bug_24_regular),
-      value: enabled,
-      onChanged: (value) async {
-        if (onChanged != null) {
-          return onChanged!(value);
-        }
-        if (enabled) {
-          await ref.read(analyticsControllerProvider.notifier).disableAnalytics();
-        } else {
-          await ref.read(analyticsControllerProvider.notifier).enableAnalytics();
         }
       },
     );

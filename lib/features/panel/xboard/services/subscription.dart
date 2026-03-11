@@ -52,7 +52,7 @@ class Subscription {
             if (newProfiles.isNotEmpty) {
               return newProfiles[0];
             } else {
-              throw Exception("系统异常");
+              throw Exception("无法获取到订阅");
             }
           },
         );

@@ -165,7 +165,7 @@
 
 * Remove hindi. 
 
-* Update flutter to 3.24. 
+* Update flutter to 3.24. [README.md](../../../HiddifyWithPanels-origin-vb/HiddifyWithPanels-origin-vb/README.md)
 
 * Merge pull request #1217 from lexxfin/main. 
   _chore: update translations with Fink 🐦_

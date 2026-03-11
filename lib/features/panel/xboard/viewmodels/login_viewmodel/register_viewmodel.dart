@@ -7,27 +7,34 @@ import 'package:hiddify/features/panel/xboard/services/http_service/auth_service
 
 class RegisterViewModel extends ChangeNotifier {
   final AuthService _authService;
+
   // 添加 FormKey
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   bool _isLoading = false;
+
   bool get isLoading => _isLoading;
 
   bool _isCountingDown = false;
+
   bool get isCountingDown => _isCountingDown;
 
   int _countdownTime = 60;
+
   int get countdownTime => _countdownTime;
 
   bool _obscurePassword = true;
+
   bool get obscurePassword => _obscurePassword;
+  bool _obscureConfirmPassword = true;
+
+  bool get obscureConfirmPassword => _obscureConfirmPassword;
 
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController passwordConfirmController = TextEditingController();
   final TextEditingController inviteCodeController = TextEditingController();
-  final TextEditingController emailCodeController = TextEditingController();
 
-  RegisterViewModel({required AuthService authService})
-      : _authService = authService;
+  RegisterViewModel({required AuthService authService}) : _authService = authService {}
 
   Future<void> sendVerificationCode(BuildContext context) async {
     final email = emailController.text.trim();
@@ -64,24 +71,25 @@ class RegisterViewModel extends ChangeNotifier {
 
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
+    final passwordConfirm = passwordConfirmController.text.trim();
     final inviteCode = inviteCodeController.text.trim();
-    final emailCode = emailCodeController.text.trim();
 
+    if (password != passwordConfirm) {
+      _showSnackbar(context, '两次输入密码不一致');
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
     try {
-      final result = await _authService.register(
-        email,
-        password,
-        inviteCode,
-        emailCode,
-      );
-
+      final result = await _authService.register(email, password, inviteCode: inviteCode.isEmpty ? null : inviteCode);
       if (result["status"] == "success") {
-        _showSnackbar(context, "Registration successful");
+        _showSnackbar(context, "注册成功");
         if (context.mounted) {
           context.go('/login');
         }
       } else {
         _showSnackbar(context, result["message"].toString());
+
       }
     } catch (e) {
       _showSnackbar(context, "Error: $e");
@@ -93,6 +101,11 @@ class RegisterViewModel extends ChangeNotifier {
 
   void togglePasswordVisibility() {
     _obscurePassword = !_obscurePassword;
+    notifyListeners();
+  }
+
+  void togglePasswordConfirmVisibility() {
+    _obscureConfirmPassword = !_obscureConfirmPassword;
     notifyListeners();
   }
 
@@ -108,8 +121,7 @@ class RegisterViewModel extends ChangeNotifier {
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
-    inviteCodeController.dispose();
-    emailCodeController.dispose();
+    passwordConfirmController.dispose();
     super.dispose();
   }
 }

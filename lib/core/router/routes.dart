@@ -5,7 +5,6 @@ import 'package:hiddify/features/common/adaptive_root_scaffold.dart';
 import 'package:hiddify/features/config_option/overview/config_options_page.dart';
 import 'package:hiddify/features/config_option/widget/quick_settings_modal.dart';
 import 'package:hiddify/features/home/widget/home_page.dart';
-import 'package:hiddify/features/intro/widget/intro_page.dart';
 import 'package:hiddify/features/log/overview/logs_overview_page.dart';
 import 'package:hiddify/features/panel/xboard/views/components/user_info/order_page.dart';
 import 'package:hiddify/features/panel/xboard/views/forget_password_view.dart';
@@ -245,21 +244,6 @@ class SplashRoute extends GoRouteData {
       fullscreenDialog: true,
       name: name,
       child: SplashPage(),
-    );
-  }
-}
-
-@TypedGoRoute<IntroRoute>(path: "/intro", name: IntroRoute.name)
-class IntroRoute extends GoRouteData {
-  const IntroRoute();
-  static const name = "Intro";
-
-  @override
-  Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return MaterialPage(
-      fullscreenDialog: true,
-      name: name,
-      child: IntroPage(),
     );
   }
 }

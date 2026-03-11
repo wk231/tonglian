@@ -11,16 +11,17 @@ class LoginViewModel extends ChangeNotifier {
   final AuthService _authService;
 
   bool _isLoading = false;
+
   bool get isLoading => _isLoading;
 
   bool _isRememberMe = false;
+
   bool get isRememberMe => _isRememberMe;
 
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  LoginViewModel({required AuthService authService})
-      : _authService = authService {
+  LoginViewModel({required AuthService authService}) : _authService = authService {
     _loadSavedCredentials();
   }
 
@@ -49,21 +50,14 @@ class LoginViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> login(
-    String email,
-    String password,
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
+  Future<void> login(String email, String password, BuildContext context, WidgetRef ref) async {
     _isLoading = true;
     notifyListeners();
 
     try {
       final result = await _authService.login(email, password);
-
       String? authData;
       String? token;
-
       // 查找 authData 和 token 的方法
       void findAuthData(Map<String, dynamic> json) {
         json.forEach((key, value) {
@@ -91,7 +85,12 @@ class LoginViewModel extends ChangeNotifier {
         // 更新 authProvider 状态为已登录
         ref.read(authProvider.notifier).state = true;
       } else {
-        throw Exception("系统异常");
+        final snackBar = SnackBar(
+          content: Text(result['message'].toString()),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
       }
     } catch (e) {
       rethrow;

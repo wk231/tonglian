@@ -56,7 +56,7 @@ class IntroPage extends HookConsumerWidget with PresLogger {
                   const SliverGap(4),
                   const RegionPrefTile(),
                   const SliverGap(4),
-                  const EnableAnalyticsPrefTile(),
+                  // const EnableAnalyticsPrefTile(),
                   const SliverGap(4),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),

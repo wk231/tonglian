@@ -1,22 +1,30 @@
 import 'package:dartx/dartx.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hiddify/core/app_info/app_info_provider.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/model/failures.dart';
+import 'package:hiddify/core/preferences/general_preferences.dart';
 import 'package:hiddify/core/router/router.dart';
 import 'package:hiddify/core/router/routes.dart';
+import 'package:hiddify/core/widget/animated_text.dart';
 import 'package:hiddify/features/common/nested_app_bar.dart';
+import 'package:hiddify/features/config_option/data/config_option_repository.dart';
+import 'package:hiddify/features/config_option/notifier/config_option_notifier.dart';
 import 'package:hiddify/features/connection/model/connection_status.dart';
 import 'package:hiddify/features/connection/notifier/connection_notifier.dart';
-import 'package:hiddify/features/home/widget/connection_button.dart';
+import 'package:hiddify/features/connection/widget/experimental_feature_notice.dart';
 import 'package:hiddify/features/home/widget/empty_profiles_home_body.dart';
 import 'package:hiddify/features/panel/xboard/services/http_service/user_service.dart';
 import 'package:hiddify/features/panel/xboard/viewmodels/proxies_viewmodel.dart';
 import 'package:hiddify/features/panel/xboard/viewmodels/user_info_viewmodel.dart';
 import 'package:hiddify/features/profile/notifier/active_profile_notifier.dart';
 import 'package:hiddify/features/proxy/active/active_proxy_delay_indicator.dart';
+import 'package:hiddify/features/proxy/active/active_proxy_notifier.dart';
+import 'package:hiddify/features/proxy/overview/proxies_overview_notifier.dart';
+import 'package:hiddify/utils/alerts.dart';
 import 'package:hiddify/utils/placeholders.dart';
 import 'package:hiddify/utils/uri_utils.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -45,8 +53,8 @@ class HomePage extends HookConsumerWidget {
       AsyncError() => true,
       _ => false,
     };
-    // 使用useState来存储选中的代理名称
-    final selectedProxyName = useState<String>('请选择线路');
+    // 使用持久化的 preference 来存储选中的代理名称
+    final selectedProxyName = ref.watch(Preferences.selectedProxyName);
 
     // 在首页加载时获取代理数据
     useEffect(() {
@@ -57,6 +65,30 @@ class HomePage extends HookConsumerWidget {
       return null;
     }, []); // 空依赖数组表示只在首次渲染时执行一次
     final viewModel = ref.watch(userInfoViewModelProvider);
+
+    final activeProxy = ref.watch(activeProxyNotifierProvider);
+    final delay = activeProxy.valueOrNull?.urlTestDelay ?? 0;
+    final requiresReconnect = ref.watch(configOptionNotifierProvider).valueOrNull;
+    ref.listen(
+      connectionNotifierProvider,
+      (_, next) {
+        if (next case AsyncError(:final error)) {
+          CustomAlertDialog.fromErr(t.presentError(error)).show(context);
+        }
+        if (next case AsyncData(value: Disconnected(:final connectionFailure?))) {
+          CustomAlertDialog.fromErr(t.presentError(connectionFailure)).show(context);
+        }
+      },
+    );
+    Future<bool> showExperimentalNotice() async {
+      final hasExperimental = ref.read(ConfigOptions.hasExperimentalFeatures);
+      final canShowNotice = !ref.read(disableExperimentalFeatureNoticeProvider);
+      if (hasExperimental && canShowNotice && context.mounted) {
+        return await const ExperimentalFeatureNoticeDialog().show(context) ?? false;
+      }
+      return true;
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -97,7 +129,65 @@ class HomePage extends HookConsumerWidget {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       const SizedBox(height: 100),
-                                      const ConnectionButton(),
+                                      Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Container(
+                                            alignment: Alignment.center,
+                                            decoration: const BoxDecoration(image: DecorationImage(image: AssetImage('assets/images/home_button_background.png'), fit: BoxFit.cover)),
+                                            width: double.infinity,
+                                            height: 260,
+                                            child: GestureDetector(
+                                              behavior: HitTestBehavior.opaque,
+                                              onTap: switch (connectionStatus) {
+                                                AsyncData(value: Disconnected()) || AsyncError() => () async {
+                                                    if (await showExperimentalNotice()) {
+                                                      return await ref.read(connectionNotifierProvider.notifier).toggleConnection();
+                                                    }
+                                                  },
+                                                AsyncData(value: Connected()) => () async {
+                                                    if (requiresReconnect == true && await showExperimentalNotice()) {
+                                                      return await ref.read(connectionNotifierProvider.notifier).reconnect(await ref.read(activeProfileProvider.future));
+                                                    }
+                                                    return await ref.read(connectionNotifierProvider.notifier).toggleConnection();
+                                                  },
+                                                _ => () {},
+                                              },
+                                              child: switch (connectionStatus) {
+                                                AsyncData(value: Connected()) => Image.asset('assets/images/home_connected.png', width: 160, height: 160),
+                                                _ => Image.asset('assets/images/home_disconnected.png', width: 160, height: 160),
+                                              },
+                                            ),
+                                          ),
+                                          const Gap(32),
+                                          switch (connectionStatus) {
+                                            AsyncData(value: Connected()) when requiresReconnect == true => ExcludeSemantics(
+                                                child: AnimatedText(
+                                                  t.connection.reconnect,
+                                                  style: Theme.of(context).textTheme.titleMedium,
+                                                ),
+                                              ),
+                                            AsyncData(value: Connected()) when delay <= 0 || delay >= 650000 => ExcludeSemantics(
+                                                child: AnimatedText(
+                                                  t.connection.connecting,
+                                                  style: Theme.of(context).textTheme.titleMedium,
+                                                ),
+                                              ),
+                                            AsyncData(value: final status) => ExcludeSemantics(
+                                                child: AnimatedText(
+                                                  status.present(t),
+                                                  style: Theme.of(context).textTheme.titleMedium,
+                                                ),
+                                              ),
+                                            _ => ExcludeSemantics(
+                                                child: AnimatedText(
+                                                  '',
+                                                  style: Theme.of(context).textTheme.titleMedium,
+                                                ),
+                                              ),
+                                          },
+                                        ],
+                                      ),
                                       const ActiveProxyDelayIndicator(),
                                       const SizedBox(height: 40),
                                       Visibility(
@@ -133,7 +223,34 @@ class HomePage extends HookConsumerWidget {
                                                 : () async {
                                                     final result = await context.push('/Proxies');
                                                     if (result != null && result is String) {
-                                                      selectedProxyName.value = result;
+                                                      await ref.read(Preferences.selectedProxyName.notifier).update(result);
+                                                      if (connectionStatus case AsyncData(value: Disconnected())) {
+                                                        if (await showExperimentalNotice()) {
+                                                          await ref.read(connectionNotifierProvider.notifier).toggleConnection();
+                                                          await Future.delayed(const Duration(seconds: 1));
+                                                          try {
+                                                            final proxiesNotifier = ref.read(proxiesOverviewNotifierProvider.notifier);
+                                                            final proxies = await ref.read(proxiesOverviewNotifierProvider.future);
+                                                            String? groupTag;
+                                                            String? outboundTag;
+                                                            for (final group in proxies) {
+                                                              for (final item in group.items) {
+                                                                if (item.name == result) {
+                                                                  groupTag = group.tag;
+                                                                  outboundTag = item.tag;
+                                                                  break;
+                                                                }
+                                                              }
+                                                              if (groupTag != null && outboundTag != null) break;
+                                                            }
+                                                            if (groupTag != null && outboundTag != null) {
+                                                              await proxiesNotifier.changeProxy(groupTag, outboundTag);
+                                                            }
+                                                          } catch (e) {
+                                                            print('切换线路失败: $e');
+                                                          }
+                                                        }
+                                                      }
                                                     }
                                                   },
                                             style: ElevatedButton.styleFrom(
@@ -151,7 +268,7 @@ class HomePage extends HookConsumerWidget {
                                                 const Icon(Icons.location_on, color: Colors.black),
                                                 const SizedBox(width: 4),
                                                 Text(
-                                                  selectedProxyName.value,
+                                                  selectedProxyName,
                                                   style: const TextStyle(
                                                     fontSize: 16,
                                                     color: Colors.black,

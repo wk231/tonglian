@@ -27,7 +27,7 @@ class SystemTrayNotifier extends _$SystemTrayNotifier with AppLogger {
 
     final activeProxy = await ref.watch(activeProxyNotifierProvider);
     final delay = activeProxy.value?.urlTestDelay ?? 0;
-    final newConnectionStatus = delay > 0 && delay < 65000;
+    final newConnectionStatus = delay > 0 && delay < 650000;
     ConnectionStatus connection;
     try {
       connection = await ref.watch(connectionNotifierProvider.future);

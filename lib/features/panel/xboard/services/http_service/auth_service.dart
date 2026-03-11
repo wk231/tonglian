@@ -12,16 +12,17 @@ class AuthService {
     );
   }
 
-  Future<Map<String, dynamic>> register(String email, String password,
-      String inviteCode, String emailCode) async {
+  Future<Map<String, dynamic>> register(String email, String password, {String? inviteCode}) async {
+    final Map<String, dynamic> body = {
+      "email": email,
+      "password": password
+    };
+    if(inviteCode != null) {
+      body["invite_code"] = inviteCode;
+    }
     return await _httpService.postRequest(
       "/api/v1/passport/auth/register",
-      {
-        "email": email,
-        "password": password,
-        "invite_code": inviteCode,
-        "email_code": emailCode,
-      },
+      body,
     );
   }
 

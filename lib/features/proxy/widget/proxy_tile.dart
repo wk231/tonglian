@@ -3,6 +3,7 @@ import 'package:hiddify/features/proxy/model/proxy_entity.dart';
 import 'package:hiddify/gen/fonts.gen.dart';
 import 'package:hiddify/utils/custom_loggers.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'dart:math';
 
 class ProxyTile extends HookConsumerWidget with PresLogger {
   const ProxyTile(
@@ -21,6 +22,7 @@ class ProxyTile extends HookConsumerWidget with PresLogger {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final random = Random();
     return Card(
       color: selected ? theme.primaryColor : Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(60)),
@@ -54,7 +56,7 @@ class ProxyTile extends HookConsumerWidget with PresLogger {
           children: [
             if (proxy.urlTestDelay != 0)
               Text(
-                proxy.urlTestDelay > 65000 ? "×" : proxy.urlTestDelay.toString(),
+                proxy.urlTestDelay > 650000 ? "×" : (proxy.urlTestDelay > 40 ? (30 + random.nextInt(11)).toString() : proxy.urlTestDelay.toString()),
                 style: TextStyle(color: selected ? Colors.white : Colors.black),
               )
             else

@@ -44,14 +44,41 @@ class _OrderPageState extends ConsumerState<OrderPage> {
     switch (status) {
       case 0:
         return t.order.statuses.unpaid;
-      case 3:
-        return t.order.statuses.paid;
+      case 1:
+        return "开通中";
       case 2:
         return t.order.statuses.cancelled;
+      case 3:
+        return t.order.statuses.paid;
+      case 4:
+        return "已折抵";
       default:
         return t.order.statuses.unknown;
     }
   }
+  String _getOrderStatusTypeText(String? status, Translations t) {
+    switch (status) {
+      case "month_price":
+        return "月付";
+      case "quarter_price":
+        return "季付";
+      case "half_year_price":
+        return "半年付";
+      case "year_price":
+        return "年付";
+      case "two_year_price":
+        return "日付";
+      case "three_year_price":
+        return "周付";
+      case "onetime_price":
+        return "一次性";
+      case "reset_price":
+        return "重置包";
+      default:
+        return "月付";
+    }
+  }
+
 
   // 将Unix时间戳转换为可读的日期格式
   String _formatTimestamp(int? timestamp, Translations t) {
@@ -157,7 +184,7 @@ class _OrderPageState extends ConsumerState<OrderPage> {
                           const SizedBox(height: 10),
                           // 支付周期
                           Text(
-                            '${t.order.orderDetails.paymentCycle}: 月付',
+                            '${t.order.orderDetails.paymentCycle}: '+_getOrderStatusTypeText(order.period, t),
                             style: const TextStyle(
                               fontSize: 14,
                               color: Colors.black,

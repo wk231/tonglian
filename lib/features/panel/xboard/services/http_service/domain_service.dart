@@ -1,10 +1,30 @@
 // services/domain_service.dart
 import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
 
 class DomainService {
-  static const String ossDomain = 'http://as001.slkj.fun';
+  // static const String ossDomain = 'http://tonglian77.com';
+  // static const String ossDomain = 'http://tlvpn.net';
+  static const String ossDomain = 'http://tlvpn.pro';
+  // static const String ossDomain = 'http://154.38.116.210';
+
+  static http.Client? _directClient;
+  static http.Client get _client {
+    _directClient ??= () {
+      final hc = HttpClient();
+      hc.findProxy = (_) => 'DIRECT';
+      hc.connectionTimeout = const Duration(seconds: 25);
+      return IOClient(hc);
+    }();
+    return _directClient!;
+  }
+
+
+  
 
 // 从返回的 JSON 中挑选一个可以正常访问的域名
   static Future<String> fetchValidDomain() async {

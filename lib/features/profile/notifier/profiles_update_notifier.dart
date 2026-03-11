@@ -36,12 +36,8 @@ class ForegroundProfilesUpdateNotifier
       _scheduler = null;
     });
 
-    if (ref.watch(Preferences.introCompleted)) {
-      loggy.debug("intro done, starting");
-      _scheduler?.start();
-    } else {
-      loggy.debug("intro in process, skipping");
-    }
+    loggy.debug("starting profiles update scheduler");
+    _scheduler?.start();
     return const Stream.empty();
   }
 

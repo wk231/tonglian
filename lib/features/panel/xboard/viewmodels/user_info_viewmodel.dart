@@ -4,6 +4,7 @@ import 'package:hiddify/features/panel/xboard/models/user_info_model.dart';
 import 'package:hiddify/features/panel/xboard/services/http_service/user_service.dart';
 import 'package:hiddify/features/panel/xboard/utils/storage/token_storage.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:hiddify/features/panel/xboard/models/subscribe_info_model.dart';
 
 // 创建 UserInfoViewModel
 class UserInfoViewModel extends ChangeNotifier {
@@ -11,6 +12,10 @@ class UserInfoViewModel extends ChangeNotifier {
 
   UserInfo? _userInfo;
   UserInfo? get userInfo => _userInfo;
+
+  SubscribeInfo? _subscribeInfo;
+  SubscribeInfo? get subscribeInfo => _subscribeInfo;
+
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -30,6 +35,8 @@ class UserInfoViewModel extends ChangeNotifier {
           print('Token: $token');
         }
         _userInfo = await _userService.fetchUserInfo(token);
+        _subscribeInfo = await _userService.getSubscriptionListt(token);
+
         if (kDebugMode) {
           print('用户信息已获取: $_userInfo');
         }

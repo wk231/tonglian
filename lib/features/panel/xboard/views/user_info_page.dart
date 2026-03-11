@@ -1,7 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/features/panel/xboard/services/future_provider.dart';
+import 'package:hiddify/features/panel/xboard/services/http_service/user_service.dart';
+import 'package:hiddify/features/panel/xboard/services/subscription.dart';
 import 'package:hiddify/features/panel/xboard/utils/logout_dialog.dart';
+import 'package:hiddify/features/panel/xboard/utils/storage/token_storage.dart';
 import 'package:hiddify/features/panel/xboard/views/components/user_info/invite_code_section.dart';
 import 'package:hiddify/features/panel/xboard/views/components/user_info/reset_subscription_button.dart';
 import 'package:hiddify/features/panel/xboard/views/components/user_info/user_info_card.dart';
@@ -16,40 +21,70 @@ class UserInfoPage extends ConsumerStatefulWidget {
 }
 
 class _UserInfoPageState extends ConsumerState<UserInfoPage> {
+  final TextEditingController controller = TextEditingController();
+
   @override
   void initState() {
     super.initState();
-    // 页面加载时自动刷新数据
-    _refreshData();
+    // 页面加载时自动刷新数据（首失败则在1秒后重试一次）
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshData();
+    });
   }
 
-  void _refreshData() {
-    // 刷新用户信息和邀请码列表
-    // ignore: unused_result
-    ref.refresh(userTokenInfoProvider);
+  Future<void> _refreshData() async {
+    Future<void> refreshOnce() async {
+      await Future.wait([
+        ref.refresh(userTokenInfoProvider.future),
+        ref.refresh(inviteCodesProvider.future),
+      ]);
+    }
+
+    try {
+      await refreshOnce();
+    } catch (_) {
+      try {
+        Timer(Duration(seconds: 1), () async {
+          await refreshOnce();
+        });
+      } catch (e2) {}
+    }
+  }
+
+  Future<void> validateExchangeCode(BuildContext context, WidgetRef ref) async {
+    final accessToken = await getToken();
+    if (accessToken == null) {
+      return;
+    }
+    final result =
+        await UserService().exchangeCode(accessToken, controller.text.trim());
+    if (result['status'] == 'success') {
+      ref.refresh(userTokenInfoProvider);
+      Subscription.resetSubscription(context, ref);
+    }
+    final snackBar = SnackBar(
+      content: Text(result['message'].toString()),
+      backgroundColor: Colors.red,
+      duration: const Duration(seconds: 3),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   @override
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: Text(t.userInfo.pageTitle, style: const TextStyle(color: Colors.black)),
+        title: Text(t.userInfo.pageTitle,
+            style: const TextStyle(color: Colors.black)),
         centerTitle: true,
         elevation: 0,
-        // actions: [
-        //   IconButton(
-        //     icon: const Icon(Icons.refresh),
-        //     onPressed: _refreshData, // 手动刷新按钮
-        //     tooltip: t.general.addToClipboard,
-        //   ),
-        // ],
       ),
       body: Stack(
         children: [
-          Image.asset('assets/images/mine_background.png', width: double.infinity, height: 353),
+          Image.asset('assets/images/mine_background.png',
+              width: double.infinity, height: 353),
           FutureBuilder(
             // 等待所有需要的数据加载完毕再渲染视图
             future: Future.wait([
@@ -65,8 +100,8 @@ class _UserInfoPageState extends ConsumerState<UserInfoPage> {
                 // 显示错误信息
                 return Center(
                   child: Text(
-                    '${t.userInfo.fetchUserInfoError} ${snapshot.error}',
-                    style: const TextStyle(fontSize: 16, color: Colors.red),
+                    '${t.userInfo.pageError}',
+                    style: const TextStyle(fontSize: 16, color: Colors.black),
                   ),
                 );
               }
@@ -82,10 +117,58 @@ class _UserInfoPageState extends ConsumerState<UserInfoPage> {
                     const SizedBox(height: 16),
                     const InviteCodeSection(),
                     const SizedBox(height: 16),
+                    Card(
+                      elevation: 4,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 26, horizontal: 18),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '兑换码',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Divider(),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: controller,
+                                    decoration: InputDecoration(
+                                      labelText: '兑换码',
+                                    ),
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return '兑换码不能为空';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                                ElevatedButton.icon(
+                                  onPressed: () =>
+                                      validateExchangeCode(context, ref),
+                                  label: Text('兑换'),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () => showDialog(
                         context: context,
-                        builder: (context) => const LogoutDialog(), // 使用 LogoutDialog 组件
+                        builder: (context) =>
+                            const LogoutDialog(), // 使用 LogoutDialog 组件
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
@@ -100,7 +183,8 @@ class _UserInfoPageState extends ConsumerState<UserInfoPage> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Image.asset('assets/images/mine_logout.png', width: 17, height: 17),
+                          Image.asset('assets/images/mine_logout.png',
+                              width: 17, height: 17),
                           const SizedBox(width: 6),
                           const Text(
                             '退出登录',
