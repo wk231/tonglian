@@ -177,6 +177,18 @@ android-libs:
 	@$(MKDIR) $(ANDROID_OUT) || echo Folder already exists. Skipping...
 	curl -L $(CORE_URL)/$(CORE_NAME)-android.tar.gz | tar xz -C $(ANDROID_OUT)/
 
+# 先下载到临时文件再解压，避免网络中断导致 libcore.aar 不完整（Unexpected end of ZLIB）
+android-libs-safe:
+	@$(MKDIR) $(ANDROID_OUT) || true
+	@echo "Downloading $(CORE_NAME)-android.tar.gz to /tmp ..."
+	@curl -L -o /tmp/$(CORE_NAME)-android.tar.gz "$(CORE_URL)/$(CORE_NAME)-android.tar.gz"
+	@SIZE=$$(stat -f%z "/tmp/$(CORE_NAME)-android.tar.gz" 2>/dev/null || stat -c%s "/tmp/$(CORE_NAME)-android.tar.gz" 2>/dev/null); \
+	if [ "$$SIZE" -lt 100000000 ]; then echo "Downloaded size $$SIZE < 100MB, likely incomplete. Aborting."; exit 1; fi
+	@echo "Extracting to $(ANDROID_OUT) ..."
+	@tar xz -C $(ANDROID_OUT)/ -f /tmp/$(CORE_NAME)-android.tar.gz
+	@rm -f /tmp/$(CORE_NAME)-android.tar.gz
+	@echo "Done. Check: ls -la $(ANDROID_OUT)/"
+
 android-apk-libs: android-libs
 android-aab-libs: android-libs
 

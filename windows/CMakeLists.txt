@@ -45,6 +45,13 @@ function(APPLY_STANDARD_SETTINGS TARGET)
   target_compile_definitions(${TARGET} PRIVATE "$<$<CONFIG:Debug>:_DEBUG>")
 endfunction()
 
+# 若从 GitHub 拉取 sentry-native 卡住，可预克隆到此处并取消下面注释，CMake 将使用本地副本
+# 执行: git clone --depth 1 -b 0.12.8 https://github.com/getsentry/sentry-native sentry-native-src
+set(SENTRY_NATIVE_LOCAL "${CMAKE_CURRENT_SOURCE_DIR}/sentry-native-src")
+if(EXISTS "${SENTRY_NATIVE_LOCAL}/CMakeLists.txt")
+  set(FETCHCONTENT_SOURCE_DIR_sentry-native "${SENTRY_NATIVE_LOCAL}" CACHE PATH "Use pre-downloaded sentry-native")
+endif()
+
 # Flutter library and tool build rules.
 set(FLUTTER_MANAGED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/flutter")
 add_subdirectory(${FLUTTER_MANAGED_DIR})

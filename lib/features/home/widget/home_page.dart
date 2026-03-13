@@ -20,7 +20,9 @@ import 'package:hiddify/features/home/widget/empty_profiles_home_body.dart';
 import 'package:hiddify/features/panel/xboard/services/http_service/user_service.dart';
 import 'package:hiddify/features/panel/xboard/viewmodels/proxies_viewmodel.dart';
 import 'package:hiddify/features/panel/xboard/viewmodels/user_info_viewmodel.dart';
+import 'package:hiddify/features/profile/model/profile_entity.dart';
 import 'package:hiddify/features/profile/notifier/active_profile_notifier.dart';
+import 'package:hiddify/features/profile/widget/profile_tile.dart';
 import 'package:hiddify/features/proxy/active/active_proxy_delay_indicator.dart';
 import 'package:hiddify/features/proxy/active/active_proxy_notifier.dart';
 import 'package:hiddify/features/proxy/overview/proxies_overview_notifier.dart';
@@ -68,15 +70,18 @@ class HomePage extends HookConsumerWidget {
 
     final activeProxy = ref.watch(activeProxyNotifierProvider);
     final delay = activeProxy.valueOrNull?.urlTestDelay ?? 0;
-    final requiresReconnect = ref.watch(configOptionNotifierProvider).valueOrNull;
+    final requiresReconnect =
+        ref.watch(configOptionNotifierProvider).valueOrNull;
     ref.listen(
       connectionNotifierProvider,
       (_, next) {
         if (next case AsyncError(:final error)) {
           CustomAlertDialog.fromErr(t.presentError(error)).show(context);
         }
-        if (next case AsyncData(value: Disconnected(:final connectionFailure?))) {
-          CustomAlertDialog.fromErr(t.presentError(connectionFailure)).show(context);
+        if (next
+            case AsyncData(value: Disconnected(:final connectionFailure?))) {
+          CustomAlertDialog.fromErr(t.presentError(connectionFailure))
+              .show(context);
         }
       },
     );
@@ -84,7 +89,8 @@ class HomePage extends HookConsumerWidget {
       final hasExperimental = ref.read(ConfigOptions.hasExperimentalFeatures);
       final canShowNotice = !ref.read(disableExperimentalFeatureNoticeProvider);
       if (hasExperimental && canShowNotice && context.mounted) {
-        return await const ExperimentalFeatureNoticeDialog().show(context) ?? false;
+        return await const ExperimentalFeatureNoticeDialog().show(context) ??
+            false;
       }
       return true;
     }
@@ -120,7 +126,8 @@ class HomePage extends HookConsumerWidget {
                         child: Stack(
                           alignment: Alignment.topCenter,
                           children: [
-                            Image.asset('assets/images/home_background.png', width: double.infinity, height: 650),
+                            Image.asset('assets/images/home_background.png',
+                                width: double.infinity, height: 650),
                             Column(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -130,59 +137,107 @@ class HomePage extends HookConsumerWidget {
                                     children: [
                                       const SizedBox(height: 100),
                                       Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           Container(
                                             alignment: Alignment.center,
-                                            decoration: const BoxDecoration(image: DecorationImage(image: AssetImage('assets/images/home_button_background.png'), fit: BoxFit.cover)),
+                                            decoration: const BoxDecoration(
+                                                image: DecorationImage(
+                                                    image: AssetImage(
+                                                        'assets/images/home_button_background.png'),
+                                                    fit: BoxFit.cover)),
                                             width: double.infinity,
                                             height: 260,
                                             child: GestureDetector(
                                               behavior: HitTestBehavior.opaque,
                                               onTap: switch (connectionStatus) {
-                                                AsyncData(value: Disconnected()) || AsyncError() => () async {
+                                                AsyncData(
+                                                  value: Disconnected()
+                                                ) ||
+                                                AsyncError() =>
+                                                  () async {
                                                     if (await showExperimentalNotice()) {
-                                                      return await ref.read(connectionNotifierProvider.notifier).toggleConnection();
+                                                      return await ref
+                                                          .read(
+                                                              connectionNotifierProvider
+                                                                  .notifier)
+                                                          .toggleConnection();
                                                     }
                                                   },
-                                                AsyncData(value: Connected()) => () async {
-                                                    if (requiresReconnect == true && await showExperimentalNotice()) {
-                                                      return await ref.read(connectionNotifierProvider.notifier).reconnect(await ref.read(activeProfileProvider.future));
+                                                AsyncData(value: Connected()) =>
+                                                  () async {
+                                                    if (requiresReconnect ==
+                                                            true &&
+                                                        await showExperimentalNotice()) {
+                                                      return await ref
+                                                          .read(
+                                                              connectionNotifierProvider
+                                                                  .notifier)
+                                                          .reconnect(await ref.read(
+                                                              activeProfileProvider
+                                                                  .future));
                                                     }
-                                                    return await ref.read(connectionNotifierProvider.notifier).toggleConnection();
+                                                    return await ref
+                                                        .read(
+                                                            connectionNotifierProvider
+                                                                .notifier)
+                                                        .toggleConnection();
                                                   },
                                                 _ => () {},
                                               },
                                               child: switch (connectionStatus) {
-                                                AsyncData(value: Connected()) => Image.asset('assets/images/home_connected.png', width: 160, height: 160),
-                                                _ => Image.asset('assets/images/home_disconnected.png', width: 160, height: 160),
+                                                AsyncData(value: Connected()) =>
+                                                  Image.asset(
+                                                      'assets/images/home_connected.png',
+                                                      width: 160,
+                                                      height: 160),
+                                                _ => Image.asset(
+                                                    'assets/images/home_disconnected.png',
+                                                    width: 160,
+                                                    height: 160),
                                               },
                                             ),
                                           ),
                                           const Gap(32),
                                           switch (connectionStatus) {
-                                            AsyncData(value: Connected()) when requiresReconnect == true => ExcludeSemantics(
+                                            AsyncData(value: Connected())
+                                                when requiresReconnect ==
+                                                    true =>
+                                              ExcludeSemantics(
                                                 child: AnimatedText(
                                                   t.connection.reconnect,
-                                                  style: Theme.of(context).textTheme.titleMedium,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .titleMedium,
                                                 ),
                                               ),
-                                            AsyncData(value: Connected()) when delay <= 0 || delay >= 650000 => ExcludeSemantics(
+                                            AsyncData(value: Connected())
+                                                when delay <= 0 ||
+                                                    delay >= 650000 =>
+                                              ExcludeSemantics(
                                                 child: AnimatedText(
                                                   t.connection.connecting,
-                                                  style: Theme.of(context).textTheme.titleMedium,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .titleMedium,
                                                 ),
                                               ),
-                                            AsyncData(value: final status) => ExcludeSemantics(
+                                            AsyncData(value: final status) =>
+                                              ExcludeSemantics(
                                                 child: AnimatedText(
                                                   status.present(t),
-                                                  style: Theme.of(context).textTheme.titleMedium,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .titleMedium,
                                                 ),
                                               ),
                                             _ => ExcludeSemantics(
                                                 child: AnimatedText(
                                                   '',
-                                                  style: Theme.of(context).textTheme.titleMedium,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .titleMedium,
                                                 ),
                                               ),
                                           },
@@ -191,7 +246,8 @@ class HomePage extends HookConsumerWidget {
                                       const ActiveProxyDelayIndicator(),
                                       const SizedBox(height: 40),
                                       Visibility(
-                                        visible: viewModel.userInfo?.planId == 0,
+                                        visible:
+                                            viewModel.userInfo?.planId == 0,
                                         child: ElevatedButton(
                                           onPressed: () async {
                                             const PurchaseRoute().push(context);
@@ -203,48 +259,97 @@ class HomePage extends HookConsumerWidget {
                                               vertical: 12,
                                             ),
                                             shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(24),
+                                              borderRadius:
+                                                  BorderRadius.circular(24),
                                             ),
                                           ),
                                           child: const Text(
                                             '暂无订阅，跳转至套餐页面购买',
-                                            style: TextStyle(color: Colors.black),
+                                            style:
+                                                TextStyle(color: Colors.black),
                                           ),
                                         ),
                                       ),
                                       const Spacer(),
+                                      switch (activeProfile) {
+                                        AsyncData(value: final profile?) =>
+                                          ProfileSubscriptionInfo(
+                                              (profile as RemoteProfileEntity)
+                                                  .subInfo!),
+                                        _ => const SizedBox(),
+                                      },
+                                      SizedBox(height: 20,),
                                       Visibility(
                                         visible: canChooseProxy,
                                         child: Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 24),
                                           child: ElevatedButton(
                                             onPressed: isSwitchingConnection
                                                 ? null
                                                 : () async {
-                                                    final result = await context.push('/Proxies');
-                                                    if (result != null && result is String) {
-                                                      await ref.read(Preferences.selectedProxyName.notifier).update(result);
-                                                      if (connectionStatus case AsyncData(value: Disconnected())) {
+                                                    final result = await context
+                                                        .push('/Proxies');
+                                                    if (result != null &&
+                                                        result is String) {
+                                                      await ref
+                                                          .read(Preferences
+                                                              .selectedProxyName
+                                                              .notifier)
+                                                          .update(result);
+                                                      if (connectionStatus
+                                                          case AsyncData(
+                                                            value:
+                                                                Disconnected()
+                                                          )) {
                                                         if (await showExperimentalNotice()) {
-                                                          await ref.read(connectionNotifierProvider.notifier).toggleConnection();
-                                                          await Future.delayed(const Duration(seconds: 1));
+                                                          await ref
+                                                              .read(
+                                                                  connectionNotifierProvider
+                                                                      .notifier)
+                                                              .toggleConnection();
+                                                          await Future.delayed(
+                                                              const Duration(
+                                                                  seconds: 1));
                                                           try {
-                                                            final proxiesNotifier = ref.read(proxiesOverviewNotifierProvider.notifier);
-                                                            final proxies = await ref.read(proxiesOverviewNotifierProvider.future);
+                                                            final proxiesNotifier =
+                                                                ref.read(
+                                                                    proxiesOverviewNotifierProvider
+                                                                        .notifier);
+                                                            final proxies =
+                                                                await ref.read(
+                                                                    proxiesOverviewNotifierProvider
+                                                                        .future);
                                                             String? groupTag;
                                                             String? outboundTag;
-                                                            for (final group in proxies) {
-                                                              for (final item in group.items) {
-                                                                if (item.name == result) {
-                                                                  groupTag = group.tag;
-                                                                  outboundTag = item.tag;
+                                                            for (final group
+                                                                in proxies) {
+                                                              for (final item
+                                                                  in group
+                                                                      .items) {
+                                                                if (item.name ==
+                                                                    result) {
+                                                                  groupTag =
+                                                                      group.tag;
+                                                                  outboundTag =
+                                                                      item.tag;
                                                                   break;
                                                                 }
                                                               }
-                                                              if (groupTag != null && outboundTag != null) break;
+                                                              if (groupTag !=
+                                                                      null &&
+                                                                  outboundTag !=
+                                                                      null)
+                                                                break;
                                                             }
-                                                            if (groupTag != null && outboundTag != null) {
-                                                              await proxiesNotifier.changeProxy(groupTag, outboundTag);
+                                                            if (groupTag !=
+                                                                    null &&
+                                                                outboundTag !=
+                                                                    null) {
+                                                              await proxiesNotifier
+                                                                  .changeProxy(
+                                                                      groupTag,
+                                                                      outboundTag);
                                                             }
                                                           } catch (e) {
                                                             print('切换线路失败: $e');
@@ -255,17 +360,20 @@ class HomePage extends HookConsumerWidget {
                                                   },
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor: Colors.white,
-                                              padding: const EdgeInsets.symmetric(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
                                                 horizontal: 20,
                                                 vertical: 12,
                                               ),
                                               shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(24),
+                                                borderRadius:
+                                                    BorderRadius.circular(24),
                                               ),
                                             ),
                                             child: Row(
                                               children: [
-                                                const Icon(Icons.location_on, color: Colors.black),
+                                                const Icon(Icons.location_on,
+                                                    color: Colors.black),
                                                 const SizedBox(width: 4),
                                                 Text(
                                                   selectedProxyName,
@@ -275,7 +383,10 @@ class HomePage extends HookConsumerWidget {
                                                   ),
                                                 ),
                                                 const Spacer(),
-                                                const Icon(Icons.keyboard_arrow_right_rounded, color: Colors.black),
+                                                const Icon(
+                                                    Icons
+                                                        .keyboard_arrow_right_rounded,
+                                                    color: Colors.black),
                                               ],
                                             ),
                                           ),
@@ -297,10 +408,12 @@ class HomePage extends HookConsumerWidget {
                 // 处理加载状态
                 AsyncLoading() => const SliverToBoxAdapter(),
                 // 处理错误状态
-                AsyncError(:final error) => SliverErrorBodyPlaceholder(t.presentShortError(error)),
+                AsyncError(:final error) =>
+                  SliverErrorBodyPlaceholder(t.presentShortError(error)),
                 // 处理空状态
                 _ => switch (hasAnyProfile) {
-                    AsyncData(value: true) => const EmptyActiveProfileHomeBody(),
+                    AsyncData(value: true) =>
+                      const EmptyActiveProfileHomeBody(),
                     _ => SliverFillRemaining(
                         hasScrollBody: false,
                         child: Center(
@@ -335,7 +448,8 @@ class HomePage extends HookConsumerWidget {
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () => UriUtils.tryLaunch(Uri.parse('https://kf.slkj.fun/')),
-          child: Image.asset('assets/images/customer_service.png', width: 46, height: 46),
+          child: Image.asset('assets/images/customer_service.png',
+              width: 46, height: 46),
         ),
       ),
     );

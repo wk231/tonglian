@@ -56,7 +56,7 @@ Future<void> lazyBootstrap(
     // 如果初始化域名出错，设置为未登录状态
     print("Error during domain initialization: $e");
     container.read(authProvider.notifier).state = false;
-    return;
+    // return;
   }
 
 // 尝试读取 token 并设置登录状态
