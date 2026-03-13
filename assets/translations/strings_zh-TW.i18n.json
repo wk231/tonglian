@@ -53,6 +53,8 @@
       "traffic": "流量",
       "updatedTimeAgo": "更新於 ${timeago}",
       "remainingDuration": "剩餘 ${duration} 天",
+      "remainingDurationMinutes": "剩餘 ${minutes}分鐘",
+      "remainingDurationHoursMinutes": "剩餘 ${hours}小時${minutes}分鐘",
       "remainingTrafficSemanticLabel": "已使用 ${consumed} 流量，總共 ${total} 流量。",
       "expired": "已到期",
       "noTraffic": "超過配額",

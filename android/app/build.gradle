@@ -92,6 +92,8 @@ android {
         release {
             minifyEnabled false
             shrinkResources false
+            // proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
+            //           'proguard-rules.pro'
             if (hasKeyStore) {
                 signingConfig signingConfigs.release
             } else {

@@ -224,6 +224,8 @@
       "traffic": "流量",
       "updatedTimeAgo": "更新于 ${timeago}",
       "remainingDuration": "剩余 ${duration} 天",
+      "remainingDurationMinutes": "剩余 ${minutes}分钟",
+      "remainingDurationHoursMinutes": "剩余 ${hours}小时${minutes}分钟",
       "remainingTrafficSemanticLabel": "已使用 ${consumed} 流量，共 ${total} 流量。",
       "expired": "已过期",
       "noTraffic": "超出限额",

@@ -223,7 +223,9 @@
     "subscription": {
       "traffic": "Traffic",
       "updatedTimeAgo": "Updated ${timeago}",
-      "remainingDuration": "${duration} Days Remaining",
+      "remainingDuration": "${duration} Days",
+      "remainingDurationMinutes": "${minutes} min",
+      "remainingDurationHoursMinutes": "${hours}h ${minutes}m",
       "remainingTrafficSemanticLabel": "${consumed} of ${total} Traffic Consumed",
       "expired": "Expired",
       "noTraffic": "Out of Quota",

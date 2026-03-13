@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dartx/dartx.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -56,8 +58,9 @@ class HomePage extends HookConsumerWidget {
       _ => false,
     };
     // 使用持久化的 preference 来存储选中的代理名称
+    
     final selectedProxyName = ref.watch(Preferences.selectedProxyName);
-
+    
     // 在首页加载时获取代理数据
     useEffect(() {
       Future.microtask(() {
@@ -278,7 +281,9 @@ class HomePage extends HookConsumerWidget {
                                                   .subInfo!),
                                         _ => const SizedBox(),
                                       },
-                                      SizedBox(height: 20,),
+                                      SizedBox(
+                                        height: 20,
+                                      ),
                                       Visibility(
                                         visible: canChooseProxy,
                                         child: Padding(

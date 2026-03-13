@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import 'dart:async';
+
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -11,12 +15,15 @@ import 'package:hiddify/core/widget/adaptive_icon.dart';
 import 'package:hiddify/core/widget/adaptive_menu.dart';
 import 'package:hiddify/features/common/confirmation_dialogs.dart';
 import 'package:hiddify/features/common/qr_code_dialog.dart';
+import 'package:hiddify/features/connection/model/connection_status.dart';
 import 'package:hiddify/features/profile/model/profile_entity.dart';
+import 'package:hiddify/features/connection/notifier/connection_notifier.dart';
 import 'package:hiddify/features/profile/notifier/profile_notifier.dart';
 import 'package:hiddify/features/profile/overview/profiles_overview_notifier.dart';
 import 'package:hiddify/gen/fonts.gen.dart';
 import 'package:hiddify/utils/utils.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 
 class ProfileTile extends HookConsumerWidget {
@@ -50,9 +57,12 @@ class ProfileTile extends HookConsumerWidget {
       _ => null,
     };
 
-    final effectiveMargin = isMain ? const EdgeInsets.symmetric(horizontal: 16, vertical: 8) : const EdgeInsets.only(left: 12, right: 12, bottom: 12);
+    final effectiveMargin = isMain
+        ? const EdgeInsets.symmetric(horizontal: 16, vertical: 8)
+        : const EdgeInsets.only(left: 12, right: 12, bottom: 12);
     final double effectiveElevation = profile.active ? 12 : 4;
-    final effectiveOutlineColor = profile.active ? theme.colorScheme.outlineVariant : Colors.transparent;
+    final effectiveOutlineColor =
+        profile.active ? theme.colorScheme.outlineVariant : Colors.transparent;
 
     return Card(
       margin: effectiveMargin,
@@ -95,7 +105,9 @@ class ProfileTile extends HookConsumerWidget {
                       if (selectActiveMutation.state.isInProgress) return;
                       if (profile.active) return;
                       selectActiveMutation.setFuture(
-                        ref.read(profilesOverviewNotifierProvider.notifier).selectActiveProfile(profile.id),
+                        ref
+                            .read(profilesOverviewNotifierProvider.notifier)
+                            .selectActiveProfile(profile.id),
                       );
                     }
                   },
@@ -115,17 +127,20 @@ class ProfileTile extends HookConsumerWidget {
                               color: Colors.transparent,
                               clipBehavior: Clip.antiAlias,
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Flexible(
                                     child: Text(
                                       profile.name,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
-                                      style: theme.textTheme.titleMedium?.copyWith(
+                                      style:
+                                          theme.textTheme.titleMedium?.copyWith(
                                         fontFamily: FontFamily.emoji,
                                       ),
-                                      semanticsLabel: t.profile.activeProfileNameSemanticLabel(
+                                      semanticsLabel: t.profile
+                                          .activeProfileNameSemanticLabel(
                                         name: profile.name,
                                       ),
                                     ),
@@ -193,7 +208,9 @@ class ProfileActionButton extends HookConsumerWidget {
               if (ref.read(updateProfileProvider(profile.id)).isLoading) {
                 return;
               }
-              ref.read(updateProfileProvider(profile.id).notifier).updateProfile(profile as RemoteProfileEntity);
+              ref
+                  .read(updateProfileProvider(profile.id).notifier)
+                  .updateProfile(profile as RemoteProfileEntity);
             },
             child: const Icon(FluentIcons.arrow_sync_24_filled),
           ),
@@ -233,7 +250,9 @@ class ProfileActionsMenu extends HookConsumerWidget {
       initialOnFailure: (err) {
         CustomToast.error(t.presentShortError(err)).show(context);
       },
-      initialOnSuccess: () => CustomToast.success(t.profile.share.exportConfigToClipboardSuccess).show(context),
+      initialOnSuccess: () =>
+          CustomToast.success(t.profile.share.exportConfigToClipboardSuccess)
+              .show(context),
     );
     final deleteProfileMutation = useMutation(
       initialOnFailure: (err) {
@@ -250,7 +269,9 @@ class ProfileActionsMenu extends HookConsumerWidget {
             if (ref.read(updateProfileProvider(profile.id)).isLoading) {
               return;
             }
-            ref.read(updateProfileProvider(profile.id).notifier).updateProfile(profile as RemoteProfileEntity);
+            ref
+                .read(updateProfileProvider(profile.id).notifier)
+                .updateProfile(profile as RemoteProfileEntity);
           },
         ),
       AdaptiveMenuItem(
@@ -265,7 +286,8 @@ class ProfileActionsMenu extends HookConsumerWidget {
                 if (link.isNotEmpty) {
                   await Clipboard.setData(ClipboardData(text: link));
                   if (context.mounted) {
-                    CustomToast(t.profile.share.exportToClipboardSuccess).show(context);
+                    CustomToast(t.profile.share.exportToClipboardSuccess)
+                        .show(context);
                   }
                 }
               },
@@ -290,7 +312,9 @@ class ProfileActionsMenu extends HookConsumerWidget {
                 return;
               }
               exportConfigMutation.setFuture(
-                ref.read(profilesOverviewNotifierProvider.notifier).exportConfigToClipboard(profile),
+                ref
+                    .read(profilesOverviewNotifierProvider.notifier)
+                    .exportConfigToClipboard(profile),
               );
             },
           ),
@@ -318,7 +342,9 @@ class ProfileActionsMenu extends HookConsumerWidget {
           );
           if (deleteConfirmed) {
             deleteProfileMutation.setFuture(
-              ref.read(profilesOverviewNotifierProvider.notifier).deleteProfile(profile),
+              ref
+                  .read(profilesOverviewNotifierProvider.notifier)
+                  .deleteProfile(profile),
             );
           }
         },
@@ -339,23 +365,57 @@ class ProfileSubscriptionInfo extends HookConsumerWidget {
 
   final SubscriptionInfo subInfo;
 
-  (String, Color?) remainingText(TranslationsEn t, ThemeData theme) {
+  (String, Color?) remainingText(
+    BuildContext context,
+    TranslationsEn t,
+    ThemeData theme,
+    Duration remaining,
+  ) {
     if (subInfo.isExpired) {
       return (t.profile.subscription.expired, theme.colorScheme.error);
     } else if (subInfo.ratio >= 1) {
       return (t.profile.subscription.noTraffic, theme.colorScheme.error);
     }
-    else if (subInfo.remaining.inDays > 3650) {
-      // return (t.profile.subscription.remainingDuration(duration: "长期有效"), null);
-      return ("长期有效", null);
 
-    }
-    else {
+    // 统一用秒计算天/小时/分钟
+    final totalSeconds = remaining.inSeconds;
+    if (totalSeconds <= 0) {
       return (
-        t.profile.subscription.remainingDuration(duration: subInfo.remaining.inDays),
+        t.profile.subscription.remainingDurationMinutes(minutes: 0),
+        null
+      );
+    }
+
+    final days = totalSeconds ~/ (24 * 60 * 60);
+    final dayRemainderSeconds = totalSeconds % (24 * 60 * 60);
+
+    // 超长有效期
+    if (days > 3650) {
+      return ("长期有效", null);
+    }
+
+    // 有整天数，按“剩余 X 天”显示
+    if (days > 0) {
+      return (
+        t.profile.subscription.remainingDuration(duration: days),
         null,
       );
     }
+
+    // 天数为 0 时，按“剩余 X 小时 X 分钟 / 剩余 X 分钟”显示
+    final hours = dayRemainderSeconds ~/ 3600;
+    final minutes = (dayRemainderSeconds % 3600) ~/ 60;
+    if (hours == 0) {
+      return (
+        t.profile.subscription.remainingDurationMinutes(minutes: minutes),
+        null
+      );
+    }
+    final text = t.profile.subscription.remainingDurationHoursMinutes(
+      hours: hours,
+      minutes: minutes,
+    );
+    return (text, null);
   }
 
   @override
@@ -363,7 +423,42 @@ class ProfileSubscriptionInfo extends HookConsumerWidget {
     final t = ref.watch(translationsProvider);
     final theme = Theme.of(context);
 
-    final remaining = remainingText(t, theme);
+    final countdown = useState(subInfo.remaining);
+
+    useEffect(() {
+      Future<void> handleExpired() async {
+        final status = ref.read(connectionNotifierProvider);
+        if (status case AsyncData(value: final value)) {
+          if (value is Connected || value is Connecting) {
+            await ref
+                .read(connectionNotifierProvider.notifier)
+                .toggleConnection();
+          }
+        }
+      }
+
+      // 一进来就已经过期的情况：直接处理一次，不用开定时器
+      if (subInfo.remaining <= Duration.zero) {
+        handleExpired();
+        return null;
+      }
+
+      // 启动倒计时
+      final timer = Timer.periodic(const Duration(seconds: 1), (t) async {
+        final next = countdown.value - const Duration(seconds: 1);
+        if (next <= Duration.zero) {
+          countdown.value = Duration.zero;
+          await handleExpired();
+          t.cancel();
+        } else {
+          countdown.value = next;
+        }
+      });
+      return timer.cancel;
+    }, [subInfo.remaining]);
+
+    final effectiveRemaining = countdown.value;
+    final remaining = remainingText(context, t, theme, effectiveRemaining);
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -375,7 +470,8 @@ class ProfileSubscriptionInfo extends HookConsumerWidget {
               //     ? "∞ G"
               //     :
               subInfo.consumption.sizeOf(subInfo.total),
-              semanticsLabel: t.profile.subscription.remainingTrafficSemanticLabel(
+              semanticsLabel:
+                  t.profile.subscription.remainingTrafficSemanticLabel(
                 consumed: subInfo.consumption.sizeGB(),
                 total: subInfo.total.sizeGB(),
               ),
