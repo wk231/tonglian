@@ -58,9 +58,9 @@ class HomePage extends HookConsumerWidget {
       _ => false,
     };
     // 使用持久化的 preference 来存储选中的代理名称
-    
+
     final selectedProxyName = ref.watch(Preferences.selectedProxyName);
-    
+
     // 在首页加载时获取代理数据
     useEffect(() {
       Future.microtask(() {
@@ -160,6 +160,30 @@ class HomePage extends HookConsumerWidget {
                                                 ) ||
                                                 AsyncError() =>
                                                   () async {
+                                                    if (activeProfile
+                                                        case AsyncData(
+                                                          value:
+                                                              final RemoteProfileEntity
+                                                              profile
+                                                        )) {
+                                                      if (profile.subInfo
+                                                                  ?.isExpired ==
+                                                              true ||
+                                                          profile.subInfo!
+                                                                  .remaining <=
+                                                              const Duration(
+                                                                  minutes: 1)) {
+                                                        context.go(
+                                                            '/purchase'); // TODO: 换成你实际的购买页路由
+                                                        return;
+                                                      }
+                                                    } else {
+                                                      // 没有订阅信息，直接跳转套餐页
+                                                      context.go(
+                                                          '/purchase'); // TODO: 换成你实际的购买页路由
+                                                      return;
+                                                    }
+
                                                     if (await showExperimentalNotice()) {
                                                       return await ref
                                                           .read(
@@ -452,7 +476,7 @@ class HomePage extends HookConsumerWidget {
         padding: const EdgeInsets.only(bottom: 80),
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: () => UriUtils.tryLaunch(Uri.parse('https://kf.slkj.fun/')),
+          onTap: () => UriUtils.tryLaunch(Uri.parse('https://kf.tlvpn.online')),
           child: Image.asset('assets/images/customer_service.png',
               width: 46, height: 46),
         ),

@@ -371,7 +371,8 @@ class ProfileSubscriptionInfo extends HookConsumerWidget {
     ThemeData theme,
     Duration remaining,
   ) {
-    if (subInfo.isExpired) {
+    // 优先看剩余时间是否 <= 0
+    if (remaining <= Duration.zero || subInfo.isExpired) {
       return (t.profile.subscription.expired, theme.colorScheme.error);
     } else if (subInfo.ratio >= 1) {
       return (t.profile.subscription.noTraffic, theme.colorScheme.error);
@@ -435,10 +436,13 @@ class ProfileSubscriptionInfo extends HookConsumerWidget {
                 .toggleConnection();
           }
         }
+        // 同时把剩余时间设为 0，让 UI 走“已过期”逻辑
+        countdown.value = Duration.zero;
       }
 
       // 一进来就已经过期的情况：直接处理一次，不用开定时器
-      if (subInfo.remaining <= Duration.zero) {
+      if (subInfo.remaining >= const Duration(minutes: 0) &&
+          subInfo.remaining <= const Duration(minutes: 1)) {
         handleExpired();
         return null;
       }

@@ -29,6 +29,7 @@ import 'package:hiddify/singbox/service/singbox_service_provider.dart';
 import 'package:hiddify/utils/utils.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+/// 先显示 Flutter 加载页，再在后台执行 bootstrap，避免长时间卡在原生启动页。
 Future<void> lazyBootstrap(
   WidgetsBinding widgetsBinding,
   Environment env,
@@ -39,6 +40,22 @@ Future<void> lazyBootstrap(
   FlutterError.onError = Logger.logFlutterError;
   WidgetsBinding.instance.platformDispatcher.onError =
       Logger.logPlatformDispatcherError;
+
+  // 先立刻显示 Flutter 的加载页，避免卡在原生启动图
+  runApp(
+    MaterialApp(
+      theme: ThemeData(useMaterial3: true),
+      home: const _BootstrapLoadingScreen(),
+    ),
+  );
+
+  final widget = await _runBootstrapAsync(env);
+  FlutterNativeSplash.remove();
+  runApp(widget);
+}
+
+/// 仅执行初始化逻辑并返回根 Widget，不调用 runApp。
+Future<Widget> _runBootstrapAsync(Environment env) async {
   final userService = UserService();
   final stopWatch = Stopwatch()..start();
 
@@ -187,14 +204,31 @@ Future<void> lazyBootstrap(
   Logger.bootstrap.info("bootstrap took [${stopWatch.elapsedMilliseconds}ms]");
   stopWatch.stop();
 
-  runApp(
-    ProviderScope(
-      parent: container,
-      child: const App(),
-    ),
+  return ProviderScope(
+    parent: container,
+    child: const App(),
   );
+}
 
-  FlutterNativeSplash.remove();
+/// 启动过程中显示的加载页，避免长时间停留在原生启动图。
+class _BootstrapLoadingScreen extends StatelessWidget {
+  const _BootstrapLoadingScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 24),
+            Text('Loading...'),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 Future<T> _init<T>(

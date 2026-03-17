@@ -49,7 +49,7 @@ public class MethodHandler: NSObject, FlutterPlugin {
                 return
             }
             result("")
-        case "change_config_options":
+        case "change_config_options", "change_hiddify_options":
             guard let options = call.arguments as? String else {
                 result(FlutterError(code: "INVALID_ARGS", message: nil, details: nil))
                 return

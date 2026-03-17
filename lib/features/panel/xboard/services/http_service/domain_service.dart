@@ -9,9 +9,9 @@ import 'package:http/io_client.dart';
 class DomainService {
   /// 主、备域名列表（按优先级从高到低）
   static const List<String> _domains = [
-    'https://tlvpn.pro',         // 主域名
-    'http://38.47.204.246:868',  // 备用 1
-    'http://tlvpn.online:886',   // 备用 2
+    'http://web.tlvpn.online:886',         // 主域名
+    // 'http://38.47.204.246:868',  // 备用 1
+    // 'http://tlvpn.online:886',   // 备用 2
   ];
 
   /// 最近一次访问成功的域名下标（进程内记忆）

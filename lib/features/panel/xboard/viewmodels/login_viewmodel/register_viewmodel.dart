@@ -1,6 +1,8 @@
 // viewmodels/register_viewmodel.dart
 // ignore_for_file: use_build_context_synchronously
 
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hiddify/features/panel/xboard/services/http_service/auth_service.dart';
@@ -31,10 +33,34 @@ class RegisterViewModel extends ChangeNotifier {
 
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController passwordConfirmController = TextEditingController();
+  final TextEditingController passwordConfirmController =
+      TextEditingController();
   final TextEditingController inviteCodeController = TextEditingController();
 
-  RegisterViewModel({required AuthService authService}) : _authService = authService {}
+  /// 设备 ID（如 Android ANDROID_ID），在注册页初始化时写入，注册时可带给后端
+  String? deviceId;
+
+  final TextEditingController captchaController = TextEditingController();
+  String? currentCaptcha = ''; // 初始值
+  String? currentCaptchaKey = ''; // 初始值验证码key
+  RegisterViewModel({required AuthService authService})
+      : _authService = authService {}
+
+  void refreshCaptcha(BuildContext context) async {
+    // 简单示例：重新随机生成 4 位验证码
+    final response = await _authService.getCaptcha();
+    if (response["code"] == 200) {
+      currentCaptcha = response["captcha"].toString();
+      currentCaptchaKey = response["captcha_key"].toString();
+    } else {
+      _showSnackbar(context, response["message"].toString());
+    }
+    notifyListeners();
+  }
+
+  void setDeviceId(String? id) {
+    deviceId = id;
+  }
 
   Future<void> sendVerificationCode(BuildContext context) async {
     final email = emailController.text.trim();
@@ -80,8 +106,31 @@ class RegisterViewModel extends ChangeNotifier {
       notifyListeners();
       return;
     }
+
+    if (currentCaptcha == null) {
+      _showSnackbar(context, '请先获取验证码');
+      _isLoading = false;
+      refreshCaptcha(context);
+      notifyListeners();
+      return;
+    }
+    final captcha = captchaController.text.trim();
+    if (captcha.isEmpty) {
+      _showSnackbar(context, '请输入验证码');
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+    if (captcha.toLowerCase() != currentCaptcha?.toLowerCase()) {
+      _showSnackbar(context, '验证码错误');
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
     try {
-      final result = await _authService.register(email, password, inviteCode: inviteCode.isEmpty ? null : inviteCode);
+      final result = await _authService.register(
+          email, password, deviceId!, currentCaptchaKey!, captcha,
+          inviteCode: inviteCode.isEmpty ? null : inviteCode);
       if (result["status"] == "success") {
         _showSnackbar(context, "注册成功");
         if (context.mounted) {
@@ -89,7 +138,6 @@ class RegisterViewModel extends ChangeNotifier {
         }
       } else {
         _showSnackbar(context, result["message"].toString());
-
       }
     } catch (e) {
       _showSnackbar(context, "Error: $e");

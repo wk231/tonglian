@@ -194,7 +194,8 @@ class VPNManager: ObservableObject {
     
     func connect(with config: String, disableMemoryLimit: Bool = false) async throws {
         await set(upload: 0, download: 0)
-        guard state == .disconnected else { return }
+        // allow first-time connect when state is still `.invalid`
+        guard state == .disconnected || state == .invalid else { return }
         do {
             try await enableVPNManager()
             try manager.connection.startVPNTunnel(options: [

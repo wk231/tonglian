@@ -1,6 +1,8 @@
 PODS:
   - cupertino_http (0.0.1):
     - Flutter
+  - device_info_plus (0.0.1):
+    - Flutter
   - EasyPermissionX/Base (0.0.2)
   - EasyPermissionX/Camera (0.0.2)
   - Flutter (1.0.0)
@@ -117,6 +119,7 @@ PODS:
 
 DEPENDENCIES:
   - cupertino_http (from `.symlinks/plugins/cupertino_http/ios`)
+  - device_info_plus (from `.symlinks/plugins/device_info_plus/ios`)
   - EasyPermissionX/Camera
   - Flutter (from `Flutter`)
   - flutter_easy_permission (from `.symlinks/plugins/flutter_easy_permission/ios`)
@@ -156,6 +159,8 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   cupertino_http:
     :path: ".symlinks/plugins/cupertino_http/ios"
+  device_info_plus:
+    :path: ".symlinks/plugins/device_info_plus/ios"
   Flutter:
     :path: Flutter
   flutter_easy_permission:
@@ -191,6 +196,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   cupertino_http: 6c6bff76e2f6915cd6b22e0e6d2698309339ec46
+  device_info_plus: 71ffc6ab7634ade6267c7a93088ed7e4f74e5896
   EasyPermissionX: ff4c438f6ee80488f873b4cb921e32d982523067
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   flutter_easy_permission: cf052765dd3f6ebe31d4305a720a3e43680b76ad
