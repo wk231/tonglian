@@ -69,7 +69,7 @@ class HttpService {
       final response = await _client
           .post(
             url,
-            // headers: requiresHeaders ? (headers ?? {'Content-Type': 'application/x-www-form-urlencoded'}) : null,
+            headers: requiresHeaders ? (headers ?? {'Content-Type': 'application/x-www-form-urlencoded'}) : null,
             body: body,
           )
           .timeout(const Duration(seconds: 20)); // 设置超时时间
